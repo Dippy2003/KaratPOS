@@ -340,3 +340,52 @@ class Payment(Base, TimestampMixin):
 
     def __repr__(self) -> str:
         return f"<Payment {self.method.value} {self.amount}>"
+
+
+# ---------------------------------------------------------------------------
+# 10. old_gold_receipts -- can be tied to a sale (exchange) or standalone buy-back
+# ---------------------------------------------------------------------------
+class OldGoldReceipt(Base, TimestampMixin):
+    __tablename__ = "old_gold_receipts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    invoice_id: Mapped[int | None] = mapped_column(ForeignKey("invoices.id"), nullable=True)
+    customer_id: Mapped[int | None] = mapped_column(ForeignKey("customers.id"), nullable=True)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    gross_weight_g: Mapped[Numeric] = mapped_column(Numeric(10, 3), nullable=False)
+    assessed_purity: Mapped[Purity] = mapped_column(Enum(Purity), nullable=False)
+    buy_rate_per_gram: Mapped[Money] = mapped_column(Money, nullable=False)
+    credit_value: Mapped[Money] = mapped_column(Money, nullable=False)
+    received_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    status: Mapped[ScrapStatus] = mapped_column(Enum(ScrapStatus), default=ScrapStatus.IN_SCRAP_STOCK, nullable=False)
+
+    invoice: Mapped["Invoice | None"] = relationship()
+    customer: Mapped["Customer | None"] = relationship()
+    received_by: Mapped["User"] = relationship()
+
+    def __repr__(self) -> str:
+        return f"<OldGoldReceipt {self.gross_weight_g}g {self.assessed_purity.value} credit={self.credit_value}>"
+
+
+# ---------------------------------------------------------------------------
+# 11. returns
+# ---------------------------------------------------------------------------
+class Return(Base, TimestampMixin):
+    __tablename__ = "returns"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    invoice_id: Mapped[int] = mapped_column(ForeignKey("invoices.id"), nullable=False)
+    invoice_item_id: Mapped[int] = mapped_column(ForeignKey("invoice_items.id"), nullable=False)
+    return_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    refund_method: Mapped[PaymentMethod] = mapped_column(Enum(PaymentMethod), nullable=False)
+    refund_amount: Mapped[Money] = mapped_column(Money, nullable=False)
+    restocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    processed_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+    invoice: Mapped["Invoice"] = relationship()
+    invoice_item: Mapped["InvoiceItem"] = relationship()
+    processed_by: Mapped["User"] = relationship()
+
+    def __repr__(self) -> str:
+        return f"<Return invoice_item={self.invoice_item_id} refund={self.refund_amount}>"
