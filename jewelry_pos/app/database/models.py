@@ -446,3 +446,36 @@ class Repair(Base, TimestampMixin):
 
     def __repr__(self) -> str:
         return f"<Repair #{self.id} {self.status.value}>"
+
+
+# ---------------------------------------------------------------------------
+# 14. audit_logs
+# ---------------------------------------------------------------------------
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    action: Mapped[str] = mapped_column(Text, nullable=False)
+    entity_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    entity_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    user: Mapped["User | None"] = relationship()
+
+    def __repr__(self) -> str:
+        return f"<AuditLog {self.timestamp} user={self.user_id} action={self.action!r}>"
+
+
+# ---------------------------------------------------------------------------
+# 15. settings -- simple key/value store
+# ---------------------------------------------------------------------------
+class Setting(Base, TimestampMixin):
+    __tablename__ = "settings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    key: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
+    value: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    def __repr__(self) -> str:
+        return f"<Setting {self.key}={self.value!r}>"
