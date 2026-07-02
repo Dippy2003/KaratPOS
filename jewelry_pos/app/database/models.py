@@ -116,3 +116,43 @@ class AdvanceOrderStatus(str, enum.Enum):
 
 # Money columns: 12 total digits, 2 decimal places -> up to Rs. 9,999,999,999.99
 Money = Numeric(12, 2)
+
+
+# ---------------------------------------------------------------------------
+# 1. users
+# ---------------------------------------------------------------------------
+class User(Base, TimestampMixin):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    full_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    role: Mapped[UserRole] = mapped_column(Enum(UserRole), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    must_change_password: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    gold_rates_entered: Mapped[list["GoldRate"]] = relationship(back_populates="entered_by_user")
+
+    def __repr__(self) -> str:
+        return f"<User {self.username} ({self.role.value})>"
+
+
+# ---------------------------------------------------------------------------
+# 2. gold_rates -- append-only history, NEVER overwritten/updated in place
+# ---------------------------------------------------------------------------
+class GoldRate(Base, TimestampMixin):
+    __tablename__ = "gold_rates"
+    __table_args__ = (UniqueConstraint("rate_date", "purity", name="uq_gold_rate_date_purity"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    rate_date: Mapped[date_] = mapped_column(Date, nullable=False, default=date_.today, index=True)
+    purity: Mapped[Purity] = mapped_column(Enum(Purity), nullable=False)
+    rate_per_gram: Mapped[Money] = mapped_column(Money, nullable=False)
+    entered_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    entered_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    entered_by_user: Mapped["User"] = relationship(back_populates="gold_rates_entered")
+
+    def __repr__(self) -> str:
+        return f"<GoldRate {self.rate_date} {self.purity.value}={self.rate_per_gram}>"
