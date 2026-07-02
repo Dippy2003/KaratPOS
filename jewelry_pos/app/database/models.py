@@ -261,3 +261,82 @@ class Customer(Base, TimestampMixin, SoftDeleteMixin):
 
     def __repr__(self) -> str:
         return f"<Customer {self.name} ({self.phone})>"
+
+
+# ---------------------------------------------------------------------------
+# 7. invoices
+# ---------------------------------------------------------------------------
+class Invoice(Base, TimestampMixin, SoftDeleteMixin):
+    __tablename__ = "invoices"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    invoice_no: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, index=True)
+    invoice_datetime: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    customer_id: Mapped[int | None] = mapped_column(ForeignKey("customers.id"), nullable=True)  # walk-in allowed
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)  # cashier
+
+    subtotal: Mapped[Money] = mapped_column(Money, nullable=False, default=0)
+    discount_total: Mapped[Money] = mapped_column(Money, nullable=False, default=0)
+    tax_total: Mapped[Money] = mapped_column(Money, nullable=False, default=0)
+    old_gold_credit: Mapped[Money] = mapped_column(Money, nullable=False, default=0)
+    grand_total: Mapped[Money] = mapped_column(Money, nullable=False, default=0)
+    amount_paid: Mapped[Money] = mapped_column(Money, nullable=False, default=0)
+    balance_returned: Mapped[Money] = mapped_column(Money, nullable=False, default=0)
+
+    status: Mapped[InvoiceStatus] = mapped_column(Enum(InvoiceStatus), default=InvoiceStatus.COMPLETED, nullable=False)
+    cancel_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    customer: Mapped["Customer | None"] = relationship(back_populates="invoices")
+    cashier: Mapped["User"] = relationship(foreign_keys=[user_id])
+    items: Mapped[list["InvoiceItem"]] = relationship(back_populates="invoice", cascade="all, delete-orphan")
+    payments: Mapped[list["Payment"]] = relationship(back_populates="invoice", cascade="all, delete-orphan")
+
+    def __repr__(self) -> str:
+        return f"<Invoice {self.invoice_no} {self.status.value}>"
+
+
+# ---------------------------------------------------------------------------
+# 8. invoice_items -- FULL PRICE SNAPSHOT frozen at sale time
+# ---------------------------------------------------------------------------
+class InvoiceItem(Base, TimestampMixin):
+    __tablename__ = "invoice_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    invoice_id: Mapped[int] = mapped_column(ForeignKey("invoices.id"), nullable=False)
+    item_id: Mapped[int] = mapped_column(ForeignKey("items.id"), nullable=False)
+
+    # --- frozen snapshot: never recompute these from current rates ---
+    gold_rate_used: Mapped[Money] = mapped_column(Money, nullable=False)
+    purity: Mapped[Purity] = mapped_column(Enum(Purity), nullable=False)
+    net_weight_g: Mapped[Numeric] = mapped_column(Numeric(10, 3), nullable=False)
+    gold_value: Mapped[Money] = mapped_column(Money, nullable=False)
+    making_charge: Mapped[Money] = mapped_column(Money, nullable=False)
+    stone_value: Mapped[Money] = mapped_column(Money, nullable=False)
+    line_discount: Mapped[Money] = mapped_column(Money, nullable=False, default=0)
+    line_total: Mapped[Money] = mapped_column(Money, nullable=False)
+    # --- end snapshot ---
+
+    is_returned: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    invoice: Mapped["Invoice"] = relationship(back_populates="items")
+    item: Mapped["Item"] = relationship(back_populates="invoice_items")
+
+    def __repr__(self) -> str:
+        return f"<InvoiceItem invoice={self.invoice_id} item={self.item_id} total={self.line_total}>"
+
+
+# ---------------------------------------------------------------------------
+# 9. payments -- multiple rows per invoice enables mixed payments
+# ---------------------------------------------------------------------------
+class Payment(Base, TimestampMixin):
+    __tablename__ = "payments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    invoice_id: Mapped[int] = mapped_column(ForeignKey("invoices.id"), nullable=False)
+    method: Mapped[PaymentMethod] = mapped_column(Enum(PaymentMethod), nullable=False)
+    amount: Mapped[Money] = mapped_column(Money, nullable=False)
+
+    invoice: Mapped["Invoice"] = relationship(back_populates="payments")
+
+    def __repr__(self) -> str:
+        return f"<Payment {self.method.value} {self.amount}>"
