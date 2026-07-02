@@ -241,3 +241,23 @@ class Item(Base, TimestampMixin, SoftDeleteMixin):
 
     def __repr__(self) -> str:
         return f"<Item {self.item_code} {self.name} ({self.status.value})>"
+
+
+# ---------------------------------------------------------------------------
+# 6. customers
+# ---------------------------------------------------------------------------
+class Customer(Base, TimestampMixin, SoftDeleteMixin):
+    __tablename__ = "customers"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    phone: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
+    address: Mapped[str | None] = mapped_column(Text, nullable=True)
+    nic: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    # Cached/derived total; recomputed from invoices, kept for fast dashboard lookups.
+    total_spent: Mapped[Money] = mapped_column(Money, nullable=False, default=0)
+
+    invoices: Mapped[list["Invoice"]] = relationship(back_populates="customer")
+
+    def __repr__(self) -> str:
+        return f"<Customer {self.name} ({self.phone})>"
