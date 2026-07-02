@@ -389,3 +389,60 @@ class Return(Base, TimestampMixin):
 
     def __repr__(self) -> str:
         return f"<Return invoice_item={self.invoice_item_id} refund={self.refund_amount}>"
+
+
+# ---------------------------------------------------------------------------
+# 12. purchases / purchase_items -- goods-receiving from suppliers
+# ---------------------------------------------------------------------------
+class Purchase(Base, TimestampMixin):
+    __tablename__ = "purchases"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id"), nullable=False)
+    purchase_date: Mapped[date_] = mapped_column(Date, default=date_.today, nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    supplier: Mapped["Supplier"] = relationship(back_populates="purchases")
+    purchase_items: Mapped[list["PurchaseItem"]] = relationship(back_populates="purchase", cascade="all, delete-orphan")
+
+    def __repr__(self) -> str:
+        return f"<Purchase #{self.id} supplier={self.supplier_id}>"
+
+
+class PurchaseItem(Base, TimestampMixin):
+    __tablename__ = "purchase_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    purchase_id: Mapped[int] = mapped_column(ForeignKey("purchases.id"), nullable=False)
+    item_id: Mapped[int] = mapped_column(ForeignKey("items.id"), nullable=False)
+    cost: Mapped[Money] = mapped_column(Money, nullable=False)
+
+    purchase: Mapped["Purchase"] = relationship(back_populates="purchase_items")
+    item: Mapped["Item"] = relationship()
+
+    def __repr__(self) -> str:
+        return f"<PurchaseItem purchase={self.purchase_id} item={self.item_id} cost={self.cost}>"
+
+
+# ---------------------------------------------------------------------------
+# 13. repairs
+# ---------------------------------------------------------------------------
+class Repair(Base, TimestampMixin):
+    __tablename__ = "repairs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"), nullable=False)
+    item_description: Mapped[str] = mapped_column(Text, nullable=False)
+    issue: Mapped[str] = mapped_column(Text, nullable=False)
+    received_date: Mapped[date_] = mapped_column(Date, default=date_.today, nullable=False)
+    promised_date: Mapped[date_ | None] = mapped_column(Date, nullable=True)
+    status: Mapped[RepairStatus] = mapped_column(Enum(RepairStatus), default=RepairStatus.RECEIVED, nullable=False)
+    estimated_cost: Mapped[Money] = mapped_column(Money, nullable=False, default=0)
+    final_cost: Mapped[Money | None] = mapped_column(Money, nullable=True)
+    received_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+    customer: Mapped["Customer"] = relationship()
+    received_by: Mapped["User"] = relationship()
+
+    def __repr__(self) -> str:
+        return f"<Repair #{self.id} {self.status.value}>"
