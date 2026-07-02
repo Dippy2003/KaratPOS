@@ -1,0 +1,16 @@
+jewelry_pos/venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.db
+*.db-journal
+jewelry_pos/data/*.db
+jewelry_pos/data/backups/*.db
+build/
+dist/
+*.spec.bak
+.vscode/
+*.egg-info/
+.pytest_cache/
