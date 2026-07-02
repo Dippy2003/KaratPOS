@@ -479,3 +479,40 @@ class Setting(Base, TimestampMixin):
 
     def __repr__(self) -> str:
         return f"<Setting {self.key}={self.value!r}>"
+
+
+# ---------------------------------------------------------------------------
+# 16. advance_orders / advance_payments -- custom orders with installments
+# ---------------------------------------------------------------------------
+class AdvanceOrder(Base, TimestampMixin):
+    __tablename__ = "advance_orders"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    estimated_total: Mapped[Money] = mapped_column(Money, nullable=False)
+    advance_paid: Mapped[Money] = mapped_column(Money, nullable=False, default=0)
+    balance: Mapped[Money] = mapped_column(Money, nullable=False)
+    due_date: Mapped[date_ | None] = mapped_column(Date, nullable=True)
+    status: Mapped[AdvanceOrderStatus] = mapped_column(Enum(AdvanceOrderStatus), default=AdvanceOrderStatus.OPEN, nullable=False)
+
+    customer: Mapped["Customer"] = relationship()
+    payments: Mapped[list["AdvancePayment"]] = relationship(back_populates="order", cascade="all, delete-orphan")
+
+    def __repr__(self) -> str:
+        return f"<AdvanceOrder #{self.id} balance={self.balance} {self.status.value}>"
+
+
+class AdvancePayment(Base, TimestampMixin):
+    __tablename__ = "advance_payments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("advance_orders.id"), nullable=False)
+    payment_date: Mapped[date_] = mapped_column(Date, default=date_.today, nullable=False)
+    amount: Mapped[Money] = mapped_column(Money, nullable=False)
+    method: Mapped[PaymentMethod] = mapped_column(Enum(PaymentMethod), nullable=False)
+
+    order: Mapped["AdvanceOrder"] = relationship(back_populates="payments")
+
+    def __repr__(self) -> str:
+        return f"<AdvancePayment order={self.order_id} amount={self.amount}>"
