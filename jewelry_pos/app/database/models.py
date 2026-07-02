@@ -156,3 +156,38 @@ class GoldRate(Base, TimestampMixin):
 
     def __repr__(self) -> str:
         return f"<GoldRate {self.rate_date} {self.purity.value}={self.rate_per_gram}>"
+
+
+# ---------------------------------------------------------------------------
+# 3. categories
+# ---------------------------------------------------------------------------
+class Category(Base, TimestampMixin):
+    __tablename__ = "categories"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    low_stock_threshold: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    items: Mapped[list["Item"]] = relationship(back_populates="category")
+
+    def __repr__(self) -> str:
+        return f"<Category {self.name}>"
+
+
+# ---------------------------------------------------------------------------
+# 4. suppliers
+# ---------------------------------------------------------------------------
+class Supplier(Base, TimestampMixin):
+    __tablename__ = "suppliers"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    address: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    items: Mapped[list["Item"]] = relationship(back_populates="supplier")
+    purchases: Mapped[list["Purchase"]] = relationship(back_populates="supplier")
+
+    def __repr__(self) -> str:
+        return f"<Supplier {self.name}>"
