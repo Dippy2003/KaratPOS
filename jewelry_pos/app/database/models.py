@@ -191,3 +191,53 @@ class Supplier(Base, TimestampMixin):
 
     def __repr__(self) -> str:
         return f"<Supplier {self.name}>"
+
+
+# ---------------------------------------------------------------------------
+# 5. items
+# ---------------------------------------------------------------------------
+# NOTE: this table intentionally has NO price column. Sale price is always
+# computed live from (net_weight_g, purity, making_charge, stone_value_total)
+# against the latest GoldRate -- see app.services.pricing.calculate_item_price().
+class Item(Base, TimestampMixin, SoftDeleteMixin):
+    __tablename__ = "items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    item_code: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(150), nullable=False)
+    category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"), nullable=False)
+    purity: Mapped[Purity] = mapped_column(Enum(Purity), nullable=False)
+
+    gross_weight_g: Mapped[Numeric] = mapped_column(Numeric(10, 3), nullable=False)
+    net_weight_g: Mapped[Numeric] = mapped_column(Numeric(10, 3), nullable=False)
+
+    making_charge_type: Mapped[MakingChargeType] = mapped_column(Enum(MakingChargeType), nullable=False)
+    # FLAT -> absolute Rs. value. PERCENT -> percentage of gold value (e.g. 12.5 = 12.5%).
+    making_charge_value: Mapped[Money] = mapped_column(Money, nullable=False, default=0)
+
+    stone_value_total: Mapped[Money] = mapped_column(Money, nullable=False, default=0)
+    stone_details: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON-encoded list
+
+    hallmark_certificate_no: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    supplier_id: Mapped[int | None] = mapped_column(ForeignKey("suppliers.id"), nullable=True)
+    cost_price: Mapped[Money] = mapped_column(Money, nullable=False, default=0)
+    photo_path: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    status: Mapped[ItemStatus] = mapped_column(Enum(ItemStatus), default=ItemStatus.AVAILABLE, nullable=False, index=True)
+    date_added: Mapped[date_] = mapped_column(Date, default=date_.today, nullable=False)
+
+    # Reservation bookkeeping so a crashed app releases items back to AVAILABLE on startup.
+    reserved_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    reserved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    # Sale bookkeeping (set when status flips RESERVED -> SOLD in Complete Sale).
+    sold_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    sold_to_customer_id: Mapped[int | None] = mapped_column(ForeignKey("customers.id"), nullable=True)
+    sold_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+
+    category: Mapped["Category"] = relationship(back_populates="items")
+    supplier: Mapped["Supplier | None"] = relationship(back_populates="items")
+    invoice_items: Mapped[list["InvoiceItem"]] = relationship(back_populates="item")
+
+    def __repr__(self) -> str:
+        return f"<Item {self.item_code} {self.name} ({self.status.value})>"
