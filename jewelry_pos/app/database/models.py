@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import enum
 from datetime import datetime, date as date_
+from decimal import Decimal
 
 from sqlalchemy import (
     Boolean,
@@ -438,7 +439,7 @@ class Repair(Base, TimestampMixin):
     promised_date: Mapped[date_ | None] = mapped_column(Date, nullable=True)
     status: Mapped[RepairStatus] = mapped_column(Enum(RepairStatus), default=RepairStatus.RECEIVED, nullable=False)
     estimated_cost: Mapped[Money] = mapped_column(Money, nullable=False, default=0)
-    final_cost: Mapped[Money | None] = mapped_column(Money, nullable=True)
+    final_cost: Mapped[Decimal | None] = mapped_column(Money, nullable=True)
     received_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
 
     customer: Mapped["Customer"] = relationship()
