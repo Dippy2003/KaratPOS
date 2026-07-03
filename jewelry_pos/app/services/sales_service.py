@@ -58,3 +58,18 @@ class SaleResult:
     invoice_no: str
     grand_total: Decimal
     balance_returned: Decimal
+
+
+def _next_invoice_no(session, year: int) -> str:
+    """INV-<year>-000001, auto-incrementing per calendar year."""
+    prefix = f"INV-{year}-"
+    last = session.scalar(
+        select(Invoice)
+        .where(Invoice.invoice_no.like(f"{prefix}%"))
+        .order_by(Invoice.id.desc())
+    )
+    if last is None:
+        next_num = 1
+    else:
+        next_num = int(last.invoice_no.split("-")[-1]) + 1
+    return f"{prefix}{next_num:06d}"
