@@ -6,6 +6,7 @@ atomic Complete Sale that prints a receipt afterward.
 """
 from __future__ import annotations
 
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
 from PySide6.QtCore import Qt
@@ -284,3 +285,98 @@ class POSScreen(QWidget):
         balance = paid_total - grand_total
         self.paid_total_label.setText(f"Total Paid: Rs. {paid_total:,.2f}")
         self.balance_label.setText(f"Balance to Return: Rs. {max(balance, Decimal('0')):,.2f}")
+
+    def _handle_complete_sale(self) -> None:
+        if not self.cart.lines:
+            QMessageBox.warning(self, "Empty Cart", "Add at least one item before completing the sale.")
+            return
+
+        discount = Decimal(str(self.discount_input.value()))
+        tax_percent = Decimal(str(self.tax_input.value()))
+        payments = [
+            PaymentInput(method=method_combo.currentData(), amount=Decimal(str(amount.value())))
+            for method_combo, amount in self.payment_rows
+            if amount.value() > 0
+        ]
+
+        try:
+            result = complete_sale(
+                cart=self.cart,
+                cashier_user_id=self.current_user_id,
+                customer_id=self.selected_customer.id if self.selected_customer else None,
+                invoice_discount=discount,
+                tax_percent=tax_percent,
+                payments=payments,
+            )
+        except SaleError as exc:
+            QMessageBox.warning(self, "Cannot Complete Sale", str(exc))
+            return
+
+        QMessageBox.information(
+            self, "Sale Completed",
+            f"Invoice {result.invoice_no} completed.\nGrand total: Rs. {result.grand_total:,.2f}\n"
+            f"Balance returned: Rs. {result.balance_returned:,.2f}",
+        )
+
+        # Receipt printing happens AFTER commit -- a printer/PDF failure must
+        # never lose the sale, since the invoice is already safely in the DB.
+        try:
+            self._print_receipt(result, payments, discount, tax_percent)
+        except Exception as exc:  # noqa: BLE001 - any print failure must not look like a lost sale
+            QMessageBox.warning(
+                self, "Receipt Printing Failed",
+                f"The sale was saved successfully (invoice {result.invoice_no}), "
+                f"but generating the receipt failed:\n{exc}\n\nUse Transaction History to reprint.",
+            )
+
+        self._reset_for_next_sale()
+
+    def _print_receipt(self, result, payments: list[PaymentInput], discount: Decimal, tax_percent: Decimal) -> None:
+        receipt_lines = [
+            ReceiptLine(
+                item_name=line.item.name,
+                item_code=line.item.item_code,
+                net_weight_g=line.price.net_weight_g,
+                purity=line.item.purity.value,
+                gold_rate_used=line.price.gold_rate_used,
+                gold_value=line.price.gold_value,
+                making_charge=line.price.making_charge,
+                stone_value=line.price.stone_value,
+                line_total=line.line_total,
+            )
+            for line in self.cart.lines
+        ]
+        tax_total = ((self.cart.subtotal - discount) * tax_percent / Decimal("100")).quantize(Decimal("0.01"))
+
+        data = ReceiptData(
+            shop_name=get_setting("shop_name"),
+            shop_address=get_setting("shop_address"),
+            shop_phone=get_setting("shop_phone"),
+            invoice_no=result.invoice_no,
+            invoice_datetime=datetime.now(),
+            cashier_name=self.cashier_name,
+            customer_name=self.selected_customer.name if self.selected_customer else None,
+            lines=receipt_lines,
+            subtotal=self.cart.subtotal,
+            discount_total=discount,
+            tax_total=tax_total,
+            old_gold_credit=Decimal("0"),
+            grand_total=result.grand_total,
+            payments=[ReceiptPaymentLine(method=p.method.value, amount=p.amount) for p in payments],
+            balance_returned=result.balance_returned,
+            footer_text=get_setting("invoice_footer_text"),
+        )
+        generate_receipt_pdf(data)
+
+    def _reset_for_next_sale(self) -> None:
+        self.cart.clear()
+        self._refresh_cart_table()
+        self.discount_input.setValue(0)
+        for _, amount in self.payment_rows:
+            amount.setValue(0)
+        self.selected_customer = None
+        self.customer_phone_input.clear()
+        self.customer_label.setText("Walk-in customer")
+        if self.on_sale_completed:
+            self.on_sale_completed()
+        self.code_input.setFocus()
