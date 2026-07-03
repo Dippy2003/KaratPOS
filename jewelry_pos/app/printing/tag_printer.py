@@ -54,3 +54,38 @@ def _draw_single_tag(pdf_canvas: canvas.Canvas, x: float, y: float, tag: TagData
     pdf_canvas.setFont("Helvetica", 6)
     pdf_canvas.drawString(text_x, y - 1.0 * cm, f"{tag.net_weight_g}g {tag.purity}")
     pdf_canvas.drawString(text_x, y - 1.5 * cm, tag.name[:16])
+
+
+def generate_tag_sheet_pdf(tags: list[TagData], output_path: str | None = None) -> str:
+    """
+    Render a grid of tags across as many A4 pages as needed. Returns the
+    path to the generated PDF (defaults to data/tags/tags_<n>.pdf).
+    """
+    if not tags:
+        raise ValueError("At least one tag is required.")
+
+    if output_path is None:
+        output_path = str(TAGS_DIR / f"tags_batch_{len(tags)}items.pdf")
+
+    page_width, page_height = A4
+    cols = int((page_width - 2 * MARGIN) // (TAG_WIDTH + GAP))
+    rows = int((page_height - 2 * MARGIN) // (TAG_HEIGHT + GAP))
+    per_page = max(cols * rows, 1)
+
+    pdf_canvas = canvas.Canvas(output_path, pagesize=A4)
+
+    for index, tag in enumerate(tags):
+        pos_in_page = index % per_page
+        if pos_in_page == 0 and index != 0:
+            pdf_canvas.showPage()
+
+        row = pos_in_page // cols
+        col = pos_in_page % cols
+
+        x = MARGIN + col * (TAG_WIDTH + GAP)
+        y = page_height - MARGIN - row * (TAG_HEIGHT + GAP)
+
+        _draw_single_tag(pdf_canvas, x, y, tag)
+
+    pdf_canvas.save()
+    return output_path
