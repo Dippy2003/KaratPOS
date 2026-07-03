@@ -118,10 +118,17 @@ class MainWindow(QMainWindow):
     def _build_content_area(self) -> QWidget:
         self.stack = QStackedWidget()
         for label in self.allowed_pages:
-            self.stack.addWidget(self._placeholder_page(label))
+            self.stack.addWidget(self._build_page_for(label))
         if self.allowed_pages:
             self.nav_list.setCurrentRow(0)
         return self.stack
+
+    def _build_page_for(self, label: str) -> QWidget:
+        if label == "Gold Rates":
+            return GoldRateScreen(self.auth_result.user_id, on_rate_added=self.rate_header.refresh)
+        if label == "Inventory":
+            return InventoryScreen(self.auth_result.user_id)
+        return self._placeholder_page(label)
 
     def _placeholder_page(self, label: str) -> QWidget:
         page = QWidget()
