@@ -145,3 +145,38 @@ class POSScreen(QWidget):
             release_item(line.item.id)
             self.cart.remove_line(line.item.id)
         self._refresh_cart_table()
+
+    def _build_right_panel(self) -> QWidget:
+        panel = QWidget()
+        layout = QVBoxLayout(panel)
+
+        layout.addWidget(self._build_customer_box())
+        layout.addWidget(self._build_totals_box())
+        layout.addWidget(self._build_payment_box())
+
+        self.complete_sale_button = QPushButton("Complete Sale (F12)")
+        self.complete_sale_button.setStyleSheet("font-weight: bold; padding: 12px; background-color: #2e7d32; color: white;")
+        self.complete_sale_button.clicked.connect(self._handle_complete_sale)
+        layout.addWidget(self.complete_sale_button)
+
+        layout.addStretch()
+        return panel
+
+    def _build_customer_box(self) -> QWidget:
+        box = QGroupBox("Customer (optional - walk-in allowed)")
+        outer = QVBoxLayout(box)
+
+        row = QHBoxLayout()
+        self.customer_phone_input = QLineEdit()
+        self.customer_phone_input.setPlaceholderText("Phone number")
+        lookup_button = QPushButton("Lookup")
+        lookup_button.clicked.connect(self._handle_customer_lookup)
+        row.addWidget(self.customer_phone_input)
+        row.addWidget(lookup_button)
+        outer.addLayout(row)
+
+        self.customer_label = QLabel("Walk-in customer")
+        self.customer_label.setStyleSheet("color: #607d8b;")
+        outer.addWidget(self.customer_label)
+
+        return box
