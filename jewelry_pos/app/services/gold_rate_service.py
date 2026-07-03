@@ -58,3 +58,33 @@ def add_rate(rate_date: date, purity: Purity, rate_per_gram: Decimal, entered_by
                 entity_id=None,
             )
         )
+
+
+def get_latest_rate(purity: Purity) -> RateRow | None:
+    """The most recent rate on or before today for one purity, or None if none exists yet."""
+    with get_session() as session:
+        row = session.scalar(
+            select(GoldRate)
+            .where(GoldRate.purity == purity, GoldRate.rate_date <= date.today())
+            .order_by(GoldRate.rate_date.desc(), GoldRate.id.desc())
+        )
+        if row is None:
+            return None
+        return RateRow(
+            id=row.id,
+            rate_date=row.rate_date,
+            purity=row.purity,
+            rate_per_gram=Decimal(row.rate_per_gram),
+            entered_by=row.entered_by_user.full_name,
+            entered_at=row.entered_at,
+        )
+
+
+def get_latest_rates_all_purities() -> dict[Purity, RateRow | None]:
+    """Latest rate per purity, for the always-visible header display."""
+    return {purity: get_latest_rate(purity) for purity in Purity}
+
+
+def has_todays_rate_for_all_purities() -> bool:
+    rates = get_latest_rates_all_purities()
+    return all(row is not None and row.rate_date == date.today() for row in rates.values())
