@@ -109,3 +109,31 @@ class InventoryScreen(QWidget):
         form.addRow(save_button)
 
         return box
+
+    def _update_price_preview(self) -> None:
+        try:
+            purity: Purity = self.purity_combo.currentData()
+            net_weight = Decimal(self.net_weight_input.text() or "0")
+            making_value = Decimal(self.making_charge_value_input.text() or "0")
+            stone_value = Decimal(self.stone_value_input.text() or "0")
+        except (InvalidOperation, ValueError):
+            self.price_preview_label.setText("Price preview: (enter valid numbers)")
+            return
+
+        rate_row = get_latest_rate(purity)
+        if rate_row is None:
+            self.price_preview_label.setText(f"Price preview: no {purity.value} rate entered yet")
+            return
+
+        fake_item = Item(
+            net_weight_g=net_weight,
+            making_charge_type=self.making_charge_type_combo.currentData(),
+            making_charge_value=making_value,
+            stone_value_total=stone_value,
+        )
+        breakdown = calculate_item_price(fake_item, rate_row.rate_per_gram)
+        self.price_preview_label.setText(
+            f"Price preview: Rs. {breakdown.subtotal:,.2f}  "
+            f"(gold Rs.{breakdown.gold_value:,.2f} + making Rs.{breakdown.making_charge:,.2f} "
+            f"+ stones Rs.{breakdown.stone_value:,.2f}) @ Rs.{rate_row.rate_per_gram:,.2f}/g"
+        )
