@@ -126,11 +126,24 @@ class MainWindow(QMainWindow):
         return self.stack
 
     def _build_page_for(self, label: str) -> QWidget:
+        if label == "Dashboard":
+            self.dashboard_screen = DashboardScreen()
+            return self.dashboard_screen
         if label == "Gold Rates":
             return GoldRateScreen(self.auth_result.user_id, on_rate_added=self.rate_header.refresh)
         if label == "Inventory":
             return InventoryScreen(self.auth_result.user_id)
+        if label == "Point of Sale":
+            return POSScreen(
+                self.auth_result.user_id,
+                self.auth_result.full_name,
+                on_sale_completed=self._handle_sale_completed,
+            )
         return self._placeholder_page(label)
+
+    def _handle_sale_completed(self) -> None:
+        if hasattr(self, "dashboard_screen"):
+            self.dashboard_screen.refresh()
 
     def _placeholder_page(self, label: str) -> QWidget:
         page = QWidget()
