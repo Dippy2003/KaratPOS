@@ -36,6 +36,10 @@ class DashboardScreen(QWidget):
 
     def _build_stat_card(self, title: str, initial_value: str) -> QFrame:
         card = QFrame()
+        # Explicit text colors are required here regardless of the OS/Qt
+        # theme: this card always has a light background, so labels must
+        # always use dark text -- letting them inherit the app palette
+        # makes them invisible under a dark system theme.
         card.setStyleSheet("background-color: #f4f6f8; border-radius: 8px; padding: 16px;")
         card.setFixedHeight(100)
         layout = QVBoxLayout(card)
@@ -44,7 +48,7 @@ class DashboardScreen(QWidget):
         title_label.setStyleSheet("color: #607d8b; font-size: 12px;")
 
         value_label = QLabel(initial_value)
-        value_label.setStyleSheet("font-size: 24px; font-weight: bold;")
+        value_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #1a1a1a;")
         value_label.setObjectName("value_label")
 
         layout.addWidget(title_label)
