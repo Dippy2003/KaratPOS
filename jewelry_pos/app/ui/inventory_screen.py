@@ -229,3 +229,24 @@ class InventoryScreen(QWidget):
             self.item_table.setItem(i, 5, QTableWidgetItem(row.status.value))
             # Stash the full row on the first cell for later retrieval (tag printing).
             self.item_table.item(i, 0).setData(Qt.ItemDataRole.UserRole, row)
+
+    def _handle_print_selected_tags(self) -> None:
+        selected_rows = {index.row() for index in self.item_table.selectedIndexes()}
+        if not selected_rows:
+            QMessageBox.warning(self, "No Selection", "Select one or more items in the table first.")
+            return
+
+        tags = []
+        for row_index in sorted(selected_rows):
+            item_row = self.item_table.item(row_index, 0).data(Qt.ItemDataRole.UserRole)
+            tags.append(
+                TagData(
+                    item_code=item_row.item_code,
+                    name=item_row.name,
+                    net_weight_g=item_row.net_weight_g,
+                    purity=item_row.purity.value,
+                )
+            )
+
+        pdf_path = generate_tag_sheet_pdf(tags)
+        QMessageBox.information(self, "Tags Generated", f"QR tag sheet saved to:\n{pdf_path}")
