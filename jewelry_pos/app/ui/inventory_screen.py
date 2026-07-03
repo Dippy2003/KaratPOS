@@ -137,3 +137,45 @@ class InventoryScreen(QWidget):
             f"(gold Rs.{breakdown.gold_value:,.2f} + making Rs.{breakdown.making_charge:,.2f} "
             f"+ stones Rs.{breakdown.stone_value:,.2f}) @ Rs.{rate_row.rate_per_gram:,.2f}/g"
         )
+
+    def _handle_save_item(self) -> None:
+        try:
+            gross_weight = Decimal(self.gross_weight_input.text() or "0")
+            net_weight = Decimal(self.net_weight_input.text() or "0")
+            making_value = Decimal(self.making_charge_value_input.text() or "0")
+            stone_value = Decimal(self.stone_value_input.text() or "0")
+            cost_price = Decimal(self.cost_price_input.text() or "0")
+        except (InvalidOperation, ValueError):
+            QMessageBox.warning(self, "Invalid Input", "Please enter valid numbers for weights and charges.")
+            return
+
+        try:
+            item_code = create_item(
+                name=self.name_input.text(),
+                category_id=self.category_combo.currentData(),
+                purity=self.purity_combo.currentData(),
+                gross_weight_g=gross_weight,
+                net_weight_g=net_weight,
+                making_charge_type=self.making_charge_type_combo.currentData(),
+                making_charge_value=making_value,
+                stone_value_total=stone_value,
+                hallmark_certificate_no=self.hallmark_input.text() or None,
+                cost_price=cost_price,
+                created_by_user_id=self.current_user_id,
+            )
+        except ValidationError as exc:
+            QMessageBox.warning(self, "Validation Error", str(exc))
+            return
+
+        QMessageBox.information(self, "Item Added", f"Item created with code {item_code}.")
+        self._clear_form()
+        self._reload_list()
+
+    def _clear_form(self) -> None:
+        self.name_input.clear()
+        self.gross_weight_input.clear()
+        self.net_weight_input.clear()
+        self.making_charge_value_input.clear()
+        self.stone_value_input.setText("0")
+        self.cost_price_input.setText("0")
+        self.hallmark_input.clear()
