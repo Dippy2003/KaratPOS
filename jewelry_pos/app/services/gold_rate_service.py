@@ -88,3 +88,22 @@ def get_latest_rates_all_purities() -> dict[Purity, RateRow | None]:
 def has_todays_rate_for_all_purities() -> bool:
     rates = get_latest_rates_all_purities()
     return all(row is not None and row.rate_date == date.today() for row in rates.values())
+
+
+def get_rate_history(limit: int = 200) -> list[RateRow]:
+    """Full rate history, most recent first, for the Gold Rate Management screen."""
+    with get_session() as session:
+        rows = session.scalars(
+            select(GoldRate).order_by(GoldRate.rate_date.desc(), GoldRate.id.desc()).limit(limit)
+        ).all()
+        return [
+            RateRow(
+                id=r.id,
+                rate_date=r.rate_date,
+                purity=r.purity,
+                rate_per_gram=Decimal(r.rate_per_gram),
+                entered_by=r.entered_by_user.full_name,
+                entered_at=r.entered_at,
+            )
+            for r in rows
+        ]
