@@ -73,3 +73,24 @@ def _next_invoice_no(session, year: int) -> str:
     else:
         next_num = int(last.invoice_no.split("-")[-1]) + 1
     return f"{prefix}{next_num:06d}"
+
+
+def _validate_sale_inputs(
+    cart: Cart,
+    invoice_discount: Decimal,
+    tax_percent: Decimal,
+    payments: list[PaymentInput],
+    old_gold_credit: Decimal,
+) -> None:
+    if not cart.lines:
+        raise SaleError("Cannot complete a sale with an empty cart.")
+    if invoice_discount < 0:
+        raise SaleError("Discount cannot be negative.")
+    if invoice_discount > cart.subtotal:
+        raise SaleError("Discount cannot exceed the cart subtotal.")
+    if tax_percent < 0:
+        raise SaleError("Tax percent cannot be negative.")
+    if not payments and old_gold_credit <= 0:
+        raise SaleError("At least one payment method (or old gold credit) is required.")
+    if any(p.amount < 0 for p in payments):
+        raise SaleError("Payment amounts cannot be negative.")
