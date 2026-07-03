@@ -179,3 +179,37 @@ class InventoryScreen(QWidget):
         self.stone_value_input.setText("0")
         self.cost_price_input.setText("0")
         self.hallmark_input.clear()
+
+    def _build_list_panel(self) -> QWidget:
+        panel = QWidget()
+        layout = QVBoxLayout(panel)
+
+        search_row = QHBoxLayout()
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Search by code or name...")
+        self.search_input.textChanged.connect(self._reload_list)
+
+        self.status_filter_combo = QComboBox()
+        self.status_filter_combo.addItem("All statuses", None)
+        for status in ItemStatus:
+            self.status_filter_combo.addItem(status.value, status)
+        self.status_filter_combo.currentIndexChanged.connect(self._reload_list)
+
+        print_tags_button = QPushButton("Print QR Tags for Selected")
+        print_tags_button.clicked.connect(self._handle_print_selected_tags)
+
+        search_row.addWidget(self.search_input)
+        search_row.addWidget(self.status_filter_combo)
+        search_row.addWidget(print_tags_button)
+        layout.addLayout(search_row)
+
+        self.item_table = QTableWidget(0, 6)
+        self.item_table.setHorizontalHeaderLabels(
+            ["Code", "Name", "Category", "Purity", "Net Wt (g)", "Status"]
+        )
+        self.item_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.item_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.item_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        layout.addWidget(self.item_table)
+
+        return panel
