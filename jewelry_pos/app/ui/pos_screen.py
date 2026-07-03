@@ -60,3 +60,28 @@ class POSScreen(QWidget):
         splitter.addWidget(self._build_right_panel())
         splitter.setSizes([850, 450])
         layout.addWidget(splitter, stretch=1)
+
+    def _build_left_panel(self) -> QWidget:
+        panel = QWidget()
+        layout = QVBoxLayout(panel)
+
+        entry_row = QHBoxLayout()
+        self.code_input = QLineEdit()
+        self.code_input.setPlaceholderText("Scan or type item code, then press Enter...")
+        self.code_input.returnPressed.connect(self._handle_add_by_code)
+        self.code_input.setFocus()
+        entry_row.addWidget(self.code_input)
+        layout.addLayout(entry_row)
+
+        self.cart_table = QTableWidget(0, 5)
+        self.cart_table.setHorizontalHeaderLabels(["Code", "Name", "Weight/Purity", "Unit Price", "Line Total"])
+        self.cart_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.cart_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.cart_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        layout.addWidget(self.cart_table, stretch=1)
+
+        remove_button = QPushButton("Remove Selected Line")
+        remove_button.clicked.connect(self._handle_remove_selected)
+        layout.addWidget(remove_button)
+
+        return panel
