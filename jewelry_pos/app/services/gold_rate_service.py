@@ -28,3 +28,33 @@ class RateRow:
     rate_per_gram: Decimal
     entered_by: str
     entered_at: object
+
+
+def add_rate(rate_date: date, purity: Purity, rate_per_gram: Decimal, entered_by_id: int) -> None:
+    """Add today's (or a backdated) rate for one purity. Fails if one already exists."""
+    with get_session() as session:
+        existing = session.scalar(
+            select(GoldRate).where(GoldRate.rate_date == rate_date, GoldRate.purity == purity)
+        )
+        if existing:
+            raise DuplicateRateError(
+                f"A rate for {purity.value} on {rate_date.isoformat()} already exists "
+                f"(Rs. {existing.rate_per_gram}/g). Rates cannot be edited, only added going forward."
+            )
+
+        session.add(
+            GoldRate(
+                rate_date=rate_date,
+                purity=purity,
+                rate_per_gram=rate_per_gram,
+                entered_by_id=entered_by_id,
+            )
+        )
+        session.add(
+            AuditLog(
+                user_id=entered_by_id,
+                action=f"Entered gold rate {purity.value} = Rs.{rate_per_gram}/g for {rate_date.isoformat()}",
+                entity_type="GoldRate",
+                entity_id=None,
+            )
+        )
