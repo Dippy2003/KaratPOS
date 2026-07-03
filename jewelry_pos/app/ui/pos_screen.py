@@ -180,3 +180,38 @@ class POSScreen(QWidget):
         outer.addWidget(self.customer_label)
 
         return box
+
+    def _build_totals_box(self) -> QWidget:
+        box = QGroupBox("Totals")
+        layout = QVBoxLayout(box)
+
+        self.subtotal_label = QLabel("Subtotal: Rs. 0.00")
+        layout.addWidget(self.subtotal_label)
+
+        discount_row = QHBoxLayout()
+        discount_row.addWidget(QLabel("Discount (Rs.):"))
+        self.discount_input = QDoubleSpinBox()
+        self.discount_input.setRange(0, 999_999_999)
+        self.discount_input.setDecimals(2)
+        self.discount_input.valueChanged.connect(self._update_totals)
+        discount_row.addWidget(self.discount_input)
+        layout.addLayout(discount_row)
+
+        tax_row = QHBoxLayout()
+        tax_row.addWidget(QLabel("Tax (%):"))
+        self.tax_input = QDoubleSpinBox()
+        self.tax_input.setRange(0, 100)
+        self.tax_input.setDecimals(2)
+        try:
+            self.tax_input.setValue(float(get_setting("tax_percent")))
+        except (ValueError, TypeError):
+            self.tax_input.setValue(0)
+        self.tax_input.valueChanged.connect(self._update_totals)
+        tax_row.addWidget(self.tax_input)
+        layout.addLayout(tax_row)
+
+        self.grand_total_label = QLabel("GRAND TOTAL: Rs. 0.00")
+        self.grand_total_label.setStyleSheet("font-weight: bold; font-size: 16px;")
+        layout.addWidget(self.grand_total_label)
+
+        return box
