@@ -210,3 +210,49 @@ def soft_delete_item(item_id: int, deleted_by_user_id: int | None = None) -> Non
                 entity_id=item.id,
             )
         )
+
+
+def search_items(
+    *,
+    query: str = "",
+    category_id: int | None = None,
+    purity: Purity | None = None,
+    status: ItemStatus | None = None,
+    min_weight: Decimal | None = None,
+    max_weight: Decimal | None = None,
+) -> list[ItemRow]:
+    """Search/filter inventory by code, name, category, purity, status, and weight range."""
+    with get_session() as session:
+        stmt = select(Item).where(Item.is_deleted.is_(False))
+
+        if query:
+            like = f"%{query.strip()}%"
+            stmt = stmt.where((Item.item_code.ilike(like)) | (Item.name.ilike(like)))
+        if category_id is not None:
+            stmt = stmt.where(Item.category_id == category_id)
+        if purity is not None:
+            stmt = stmt.where(Item.purity == purity)
+        if status is not None:
+            stmt = stmt.where(Item.status == status)
+        if min_weight is not None:
+            stmt = stmt.where(Item.net_weight_g >= min_weight)
+        if max_weight is not None:
+            stmt = stmt.where(Item.net_weight_g <= max_weight)
+
+        stmt = stmt.order_by(Item.id.desc())
+        items = session.scalars(stmt).all()
+        return [_to_row(item) for item in items]
+
+
+def count_available_by_category(category_id: int) -> int:
+    """Used for low-stock alerts against Category.low_stock_threshold."""
+    with get_session() as session:
+        return len(
+            session.scalars(
+                select(Item).where(
+                    Item.category_id == category_id,
+                    Item.status == ItemStatus.AVAILABLE,
+                    Item.is_deleted.is_(False),
+                )
+            ).all()
+        )
