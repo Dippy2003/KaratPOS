@@ -38,7 +38,10 @@ class RateHeaderWidget(QFrame):
                 label.setStyleSheet("color: #c0392b; font-weight: bold;")
             else:
                 label = QLabel(f"{purity.value}: Rs. {row.rate_per_gram:,.2f}/g")
-                label.setStyleSheet("font-weight: bold;")
+                # Explicit dark text: this bar always has a light background
+                # regardless of OS theme, so text must not inherit the
+                # app-wide (possibly white, under a dark theme) palette color.
+                label.setStyleSheet("font-weight: bold; color: #1a1a1a;")
                 if row.rate_date != date.today():
                     stale_dates.add(row.rate_date)
             self._layout.addWidget(label)
