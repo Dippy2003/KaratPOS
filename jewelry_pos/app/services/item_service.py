@@ -101,3 +101,51 @@ def create_item(
             )
         )
         return item_code
+
+
+def update_item(item_id: int, updated_by_user_id: int | None = None, **fields) -> None:
+    """
+    Update mutable fields on an existing item. `fields` may include any of:
+    name, category_id, purity, gross_weight_g, net_weight_g, making_charge_type,
+    making_charge_value, stone_value_total, stone_details, hallmark_certificate_no,
+    supplier_id, cost_price, photo_path.
+
+    Price-affecting edits (weight, purity, making charge, stone value) are
+    audit-logged individually since they change what customers will be charged.
+    """
+    price_affecting = {
+        "gross_weight_g", "net_weight_g", "making_charge_type",
+        "making_charge_value", "stone_value_total", "purity",
+    }
+
+    with get_session() as session:
+        item = session.get(Item, item_id)
+        if item is None or item.is_deleted:
+            raise ValidationError("Item not found.")
+
+        gross = fields.get("gross_weight_g", item.gross_weight_g)
+        net = fields.get("net_weight_g", item.net_weight_g)
+        making_value = fields.get("making_charge_value", item.making_charge_value)
+        stone_value = fields.get("stone_value_total", item.stone_value_total)
+        cost = fields.get("cost_price", item.cost_price)
+        name = fields.get("name", item.name)
+        _validate_item_fields(name, Decimal(gross), Decimal(net), Decimal(making_value), Decimal(stone_value), Decimal(cost))
+
+        changed_price_fields = []
+        for key, value in fields.items():
+            if not hasattr(item, key):
+                continue
+            old_value = getattr(item, key)
+            if key in price_affecting and old_value != value:
+                changed_price_fields.append(f"{key}: {old_value} -> {value}")
+            setattr(item, key, value)
+
+        if changed_price_fields:
+            session.add(
+                AuditLog(
+                    user_id=updated_by_user_id,
+                    action=f"Edited price-affecting fields on {item.item_code}: " + "; ".join(changed_price_fields),
+                    entity_type="Item",
+                    entity_id=item.id,
+                )
+            )
