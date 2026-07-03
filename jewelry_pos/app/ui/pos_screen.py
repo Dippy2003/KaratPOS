@@ -125,3 +125,23 @@ class POSScreen(QWidget):
         self.cart.add_line(CartLine(item=item_row, price=price))
         self._refresh_cart_table()
         self.code_input.setFocus()
+
+    def _refresh_cart_table(self) -> None:
+        self.cart_table.setRowCount(len(self.cart.lines))
+        for i, line in enumerate(self.cart.lines):
+            self.cart_table.setItem(i, 0, QTableWidgetItem(line.item.item_code))
+            self.cart_table.setItem(i, 1, QTableWidgetItem(line.item.name))
+            self.cart_table.setItem(i, 2, QTableWidgetItem(f"{line.item.net_weight_g}g {line.item.purity.value}"))
+            self.cart_table.setItem(i, 3, QTableWidgetItem(f"Rs. {line.price.subtotal:,.2f}"))
+            self.cart_table.setItem(i, 4, QTableWidgetItem(f"Rs. {line.line_total:,.2f}"))
+        self._update_totals()
+
+    def _handle_remove_selected(self) -> None:
+        selected_rows = sorted({index.row() for index in self.cart_table.selectedIndexes()}, reverse=True)
+        if not selected_rows:
+            return
+        for row_index in selected_rows:
+            line = self.cart.lines[row_index]
+            release_item(line.item.id)
+            self.cart.remove_line(line.item.id)
+        self._refresh_cart_table()
