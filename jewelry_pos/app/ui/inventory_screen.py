@@ -213,3 +213,19 @@ class InventoryScreen(QWidget):
         layout.addWidget(self.item_table)
 
         return panel
+
+    def _reload_list(self) -> None:
+        query = self.search_input.text()
+        status = self.status_filter_combo.currentData()
+        rows = search_items(query=query, status=status)
+
+        self.item_table.setRowCount(len(rows))
+        for i, row in enumerate(rows):
+            self.item_table.setItem(i, 0, QTableWidgetItem(row.item_code))
+            self.item_table.setItem(i, 1, QTableWidgetItem(row.name))
+            self.item_table.setItem(i, 2, QTableWidgetItem(row.category_name))
+            self.item_table.setItem(i, 3, QTableWidgetItem(row.purity.value))
+            self.item_table.setItem(i, 4, QTableWidgetItem(str(row.net_weight_g)))
+            self.item_table.setItem(i, 5, QTableWidgetItem(row.status.value))
+            # Stash the full row on the first cell for later retrieval (tag printing).
+            self.item_table.item(i, 0).setData(Qt.ItemDataRole.UserRole, row)
