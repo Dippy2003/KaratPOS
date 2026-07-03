@@ -23,6 +23,9 @@ from PySide6.QtWidgets import (
 
 from app.database.models import UserRole
 from app.services.auth_service import AuthResult, log_logout
+from app.ui.gold_rate_screen import GoldRateScreen
+from app.ui.inventory_screen import InventoryScreen
+from app.ui.rate_header_widget import RateHeaderWidget
 from app.utils.config import APP_NAME
 
 # Each nav entry: (label, roles allowed to see it)
@@ -52,12 +55,21 @@ class MainWindow(QMainWindow):
 
     def _build_ui(self) -> None:
         central = QWidget()
-        root_layout = QHBoxLayout(central)
+        outer_layout = QVBoxLayout(central)
+        outer_layout.setContentsMargins(0, 0, 0, 0)
+        outer_layout.setSpacing(0)
+
+        self.rate_header = RateHeaderWidget()
+        outer_layout.addWidget(self.rate_header)
+
+        body = QWidget()
+        root_layout = QHBoxLayout(body)
         root_layout.setContentsMargins(0, 0, 0, 0)
         root_layout.setSpacing(0)
 
         root_layout.addWidget(self._build_sidebar())
         root_layout.addWidget(self._build_content_area(), stretch=1)
+        outer_layout.addWidget(body, stretch=1)
 
         self.setCentralWidget(central)
         self.setStatusBar(QStatusBar())
@@ -106,10 +118,17 @@ class MainWindow(QMainWindow):
     def _build_content_area(self) -> QWidget:
         self.stack = QStackedWidget()
         for label in self.allowed_pages:
-            self.stack.addWidget(self._placeholder_page(label))
+            self.stack.addWidget(self._build_page_for(label))
         if self.allowed_pages:
             self.nav_list.setCurrentRow(0)
         return self.stack
+
+    def _build_page_for(self, label: str) -> QWidget:
+        if label == "Gold Rates":
+            return GoldRateScreen(self.auth_result.user_id, on_rate_added=self.rate_header.refresh)
+        if label == "Inventory":
+            return InventoryScreen(self.auth_result.user_id)
+        return self._placeholder_page(label)
 
     def _placeholder_page(self, label: str) -> QWidget:
         page = QWidget()
