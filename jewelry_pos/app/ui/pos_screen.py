@@ -85,3 +85,43 @@ class POSScreen(QWidget):
         layout.addWidget(remove_button)
 
         return panel
+
+    def _handle_add_by_code(self) -> None:
+        code = self.code_input.text().strip()
+        self.code_input.clear()
+        if not code:
+            return
+
+        item_row = get_item_by_code(code)
+        if item_row is None:
+            QMessageBox.warning(self, "Not Found", f"No item found with code '{code}'.")
+            return
+        if item_row.status != ItemStatus.AVAILABLE:
+            QMessageBox.warning(self, "Not Available", f"Item {code} is not available (status: {item_row.status.value}).")
+            return
+        if self.cart.has_item(item_row.id):
+            QMessageBox.information(self, "Already in Cart", f"Item {code} is already in the cart.")
+            return
+
+        rate_row = get_latest_rate(item_row.purity)
+        if rate_row is None:
+            QMessageBox.warning(self, "No Rate", f"No gold rate has been entered yet for {item_row.purity.value}.")
+            return
+
+        try:
+            reserve_item(item_row.id, self.current_user_id)
+        except ReservationError as exc:
+            QMessageBox.warning(self, "Cannot Reserve", str(exc))
+            return
+
+        fake_item = Item(
+            net_weight_g=item_row.net_weight_g,
+            making_charge_type=item_row.making_charge_type,
+            making_charge_value=item_row.making_charge_value,
+            stone_value_total=item_row.stone_value_total,
+        )
+        price = calculate_item_price(fake_item, rate_row.rate_per_gram)
+
+        self.cart.add_line(CartLine(item=item_row, price=price))
+        self._refresh_cart_table()
+        self.code_input.setFocus()
