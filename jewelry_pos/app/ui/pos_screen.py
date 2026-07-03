@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.database.models import ItemStatus, PaymentMethod
+from app.database.models import Item, ItemStatus, PaymentMethod
 from app.services.cart import Cart, CartLine
 from app.services.customer_service import find_by_phone
 from app.services.gold_rate_service import get_latest_rate
@@ -36,4 +36,27 @@ from app.services.reservation_service import ReservationError, release_item, res
 from app.services.sales_service import PaymentInput, SaleError, complete_sale
 from app.services.settings_service import get_setting
 from app.printing.receipt_pdf import ReceiptData, ReceiptLine, ReceiptPaymentLine, generate_receipt_pdf
-from app.database.models import Item
+
+
+class POSScreen(QWidget):
+    def __init__(self, current_user_id: int, cashier_name: str, on_sale_completed=None, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.current_user_id = current_user_id
+        self.cashier_name = cashier_name
+        self.on_sale_completed = on_sale_completed
+        self.cart = Cart()
+        self.selected_customer = None  # CustomerRow | None
+        self._build_ui()
+
+    def _build_ui(self) -> None:
+        layout = QVBoxLayout(self)
+
+        title = QLabel("Point of Sale")
+        title.setStyleSheet("font-size: 22px; font-weight: bold;")
+        layout.addWidget(title)
+
+        splitter = QSplitter()
+        splitter.addWidget(self._build_left_panel())
+        splitter.addWidget(self._build_right_panel())
+        splitter.setSizes([850, 450])
+        layout.addWidget(splitter, stretch=1)
