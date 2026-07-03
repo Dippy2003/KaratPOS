@@ -74,3 +74,38 @@ class GoldRateScreen(QWidget):
         self.history_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.history_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         return self.history_table
+
+    def _handle_add_rate(self) -> None:
+        purity: Purity = self.purity_combo.currentData()
+        raw_rate = self.rate_input.text().strip()
+
+        try:
+            rate = Decimal(raw_rate)
+        except (InvalidOperation, ValueError):
+            QMessageBox.warning(self, "Invalid Rate", "Please enter a valid numeric rate.")
+            return
+
+        if rate <= 0:
+            QMessageBox.warning(self, "Invalid Rate", "Rate must be greater than zero.")
+            return
+
+        try:
+            add_rate(date.today(), purity, rate, self.current_user_id)
+        except DuplicateRateError as exc:
+            QMessageBox.warning(self, "Rate Already Entered", str(exc))
+            return
+
+        self.rate_input.clear()
+        self._reload_history()
+        if self.on_rate_added:
+            self.on_rate_added()
+        QMessageBox.information(self, "Rate Added", f"{purity.value} rate set to Rs. {rate:,.2f}/g for today.")
+
+    def _reload_history(self) -> None:
+        rows = get_rate_history()
+        self.history_table.setRowCount(len(rows))
+        for i, row in enumerate(rows):
+            self.history_table.setItem(i, 0, QTableWidgetItem(row.rate_date.strftime("%d/%m/%Y")))
+            self.history_table.setItem(i, 1, QTableWidgetItem(row.purity.value))
+            self.history_table.setItem(i, 2, QTableWidgetItem(f"{row.rate_per_gram:,.2f}"))
+            self.history_table.setItem(i, 3, QTableWidgetItem(row.entered_by))
