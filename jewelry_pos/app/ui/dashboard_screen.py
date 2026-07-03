@@ -41,7 +41,11 @@ class DashboardScreen(QWidget):
         # always use dark text -- letting them inherit the app palette
         # makes them invisible under a dark system theme.
         card.setStyleSheet("background-color: #f4f6f8; border-radius: 8px; padding: 16px;")
-        card.setFixedHeight(100)
+        # A fixed pixel height clips its labels under Windows display
+        # scaling (e.g. 125%/150%) once scaled font metrics exceed the
+        # unscaled height budget. Use a minimum height instead so the
+        # card can grow to fit its content at any DPI scale.
+        card.setMinimumHeight(100)
         layout = QVBoxLayout(card)
 
         title_label = QLabel(title)
