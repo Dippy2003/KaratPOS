@@ -252,3 +252,35 @@ class POSScreen(QWidget):
         row.addWidget(amount_input)
         self.payments_layout.addLayout(row)
         self.payment_rows.append((method_combo, amount_input))
+
+    def _handle_customer_lookup(self) -> None:
+        phone = self.customer_phone_input.text().strip()
+        if not phone:
+            self.selected_customer = None
+            self.customer_label.setText("Walk-in customer")
+            return
+
+        customer = find_by_phone(phone)
+        if customer is None:
+            QMessageBox.information(self, "Not Found", f"No customer found with phone '{phone}'.")
+            self.selected_customer = None
+            self.customer_label.setText("Walk-in customer")
+            return
+
+        self.selected_customer = customer
+        self.customer_label.setText(f"{customer.name} ({customer.phone})")
+
+    def _update_totals(self) -> None:
+        subtotal = self.cart.subtotal
+        discount = Decimal(str(self.discount_input.value()))
+        tax_percent = Decimal(str(self.tax_input.value()))
+        tax_total = ((subtotal - discount) * tax_percent / Decimal("100")).quantize(Decimal("0.01"))
+        grand_total = subtotal - discount + tax_total
+
+        self.subtotal_label.setText(f"Subtotal: Rs. {subtotal:,.2f}")
+        self.grand_total_label.setText(f"GRAND TOTAL: Rs. {grand_total:,.2f}")
+
+        paid_total = sum((Decimal(str(amount.value())) for _, amount in self.payment_rows), Decimal("0"))
+        balance = paid_total - grand_total
+        self.paid_total_label.setText(f"Total Paid: Rs. {paid_total:,.2f}")
+        self.balance_label.setText(f"Balance to Return: Rs. {max(balance, Decimal('0')):,.2f}")
