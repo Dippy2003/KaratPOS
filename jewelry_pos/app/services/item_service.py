@@ -20,6 +20,24 @@ class ValidationError(Exception):
     """Raised for invalid item field values (never let raw exceptions reach the UI)."""
 
 
+@dataclass(frozen=True)
+class ItemRow:
+    """Detached snapshot of an Item row, safe to use outside a session."""
+    id: int
+    item_code: str
+    name: str
+    category_name: str
+    purity: Purity
+    gross_weight_g: Decimal
+    net_weight_g: Decimal
+    making_charge_type: MakingChargeType
+    making_charge_value: Decimal
+    stone_value_total: Decimal
+    cost_price: Decimal
+    status: ItemStatus
+    photo_path: str | None
+
+
 def _next_item_code(session) -> str:
     last = session.scalars(select(Item).order_by(Item.id.desc())).first()
     next_num = (last.id + 1) if last else 1
