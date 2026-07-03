@@ -215,3 +215,40 @@ class POSScreen(QWidget):
         layout.addWidget(self.grand_total_label)
 
         return box
+
+    def _build_payment_box(self) -> QWidget:
+        box = QGroupBox("Payments (mixed payments supported)")
+        layout = QVBoxLayout(box)
+
+        self.payment_rows: list[tuple[QComboBox, QDoubleSpinBox]] = []
+        self.payments_layout = QVBoxLayout()
+        layout.addLayout(self.payments_layout)
+        self._add_payment_row()
+
+        add_payment_button = QPushButton("+ Add Payment Method")
+        add_payment_button.clicked.connect(lambda: self._add_payment_row())
+        layout.addWidget(add_payment_button)
+
+        self.paid_total_label = QLabel("Total Paid: Rs. 0.00")
+        self.balance_label = QLabel("Balance to Return: Rs. 0.00")
+        layout.addWidget(self.paid_total_label)
+        layout.addWidget(self.balance_label)
+
+        return box
+
+    def _add_payment_row(self) -> None:
+        row = QHBoxLayout()
+        method_combo = QComboBox()
+        for method in PaymentMethod:
+            if method != PaymentMethod.OLD_GOLD:  # old gold handled via a separate exchange flow later
+                method_combo.addItem(method.value, method)
+
+        amount_input = QDoubleSpinBox()
+        amount_input.setRange(0, 999_999_999)
+        amount_input.setDecimals(2)
+        amount_input.valueChanged.connect(self._update_totals)
+
+        row.addWidget(method_combo)
+        row.addWidget(amount_input)
+        self.payments_layout.addLayout(row)
+        self.payment_rows.append((method_combo, amount_input))
