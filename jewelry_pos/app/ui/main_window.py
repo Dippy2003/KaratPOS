@@ -55,12 +55,21 @@ class MainWindow(QMainWindow):
 
     def _build_ui(self) -> None:
         central = QWidget()
-        root_layout = QHBoxLayout(central)
+        outer_layout = QVBoxLayout(central)
+        outer_layout.setContentsMargins(0, 0, 0, 0)
+        outer_layout.setSpacing(0)
+
+        self.rate_header = RateHeaderWidget()
+        outer_layout.addWidget(self.rate_header)
+
+        body = QWidget()
+        root_layout = QHBoxLayout(body)
         root_layout.setContentsMargins(0, 0, 0, 0)
         root_layout.setSpacing(0)
 
         root_layout.addWidget(self._build_sidebar())
         root_layout.addWidget(self._build_content_area(), stretch=1)
+        outer_layout.addWidget(body, stretch=1)
 
         self.setCentralWidget(central)
         self.setStatusBar(QStatusBar())
