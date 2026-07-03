@@ -169,6 +169,30 @@ def update_item(item_id: int, updated_by_user_id: int | None = None, **fields) -
             )
 
 
+def _to_row(item: Item) -> ItemRow:
+    return ItemRow(
+        id=item.id,
+        item_code=item.item_code,
+        name=item.name,
+        category_name=item.category.name,
+        purity=item.purity,
+        gross_weight_g=Decimal(item.gross_weight_g),
+        net_weight_g=Decimal(item.net_weight_g),
+        making_charge_type=item.making_charge_type,
+        making_charge_value=Decimal(item.making_charge_value),
+        stone_value_total=Decimal(item.stone_value_total),
+        cost_price=Decimal(item.cost_price),
+        status=item.status,
+        photo_path=item.photo_path,
+    )
+
+
+def get_item_by_code(item_code: str) -> ItemRow | None:
+    with get_session() as session:
+        item = session.scalar(select(Item).where(Item.item_code == item_code, Item.is_deleted.is_(False)))
+        return _to_row(item) if item else None
+
+
 def soft_delete_item(item_id: int, deleted_by_user_id: int | None = None) -> None:
     """Soft-delete only. Items are never hard-deleted (financial/inventory history)."""
     with get_session() as session:
