@@ -149,3 +149,22 @@ def update_item(item_id: int, updated_by_user_id: int | None = None, **fields) -
                     entity_id=item.id,
                 )
             )
+
+
+def soft_delete_item(item_id: int, deleted_by_user_id: int | None = None) -> None:
+    """Soft-delete only. Items are never hard-deleted (financial/inventory history)."""
+    with get_session() as session:
+        item = session.get(Item, item_id)
+        if item is None:
+            raise ValidationError("Item not found.")
+        if item.status == ItemStatus.SOLD:
+            raise ValidationError("Cannot delete an item that has been sold. It remains on past invoices.")
+        item.is_deleted = True
+        session.add(
+            AuditLog(
+                user_id=deleted_by_user_id,
+                action=f"Soft-deleted item {item.item_code} ({item.name})",
+                entity_type="Item",
+                entity_id=item.id,
+            )
+        )
