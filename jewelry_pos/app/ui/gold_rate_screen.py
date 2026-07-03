@@ -67,3 +67,10 @@ class GoldRateScreen(QWidget):
         row.addStretch()
 
         return form
+
+    def _build_history_table(self) -> QTableWidget:
+        self.history_table = QTableWidget(0, 4)
+        self.history_table.setHorizontalHeaderLabels(["Date", "Purity", "Rate (Rs./g)", "Entered By"])
+        self.history_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.history_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        return self.history_table
