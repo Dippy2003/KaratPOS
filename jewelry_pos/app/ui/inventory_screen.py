@@ -31,3 +31,24 @@ from app.services.gold_rate_service import get_latest_rate
 from app.services.item_service import ValidationError, create_item, search_items
 from app.services.pricing_service import calculate_item_price
 from app.printing.tag_printer import TagData, generate_tag_sheet_pdf
+
+
+class InventoryScreen(QWidget):
+    def __init__(self, current_user_id: int, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.current_user_id = current_user_id
+        self._build_ui()
+        self._reload_list()
+
+    def _build_ui(self) -> None:
+        layout = QVBoxLayout(self)
+
+        title = QLabel("Inventory Management")
+        title.setStyleSheet("font-size: 22px; font-weight: bold;")
+        layout.addWidget(title)
+
+        splitter = QSplitter()
+        splitter.addWidget(self._build_add_item_form())
+        splitter.addWidget(self._build_list_panel())
+        splitter.setSizes([420, 900])
+        layout.addWidget(splitter, stretch=1)
