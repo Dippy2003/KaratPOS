@@ -136,6 +136,11 @@ class POSScreen(QWidget):
         self._refresh_cart_table()
         self.code_input.setFocus()
 
+    def _handle_open_webcam_scan(self) -> None:
+        dialog = WebcamScanDialog(self)
+        dialog.code_scanned.connect(self._handle_add_by_code)
+        dialog.exec()
+
     def _refresh_cart_table(self) -> None:
         self.cart_table.setRowCount(len(self.cart.lines))
         for i, line in enumerate(self.cart.lines):
