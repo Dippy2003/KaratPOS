@@ -77,3 +77,40 @@ class ReturnsScreen(QWidget):
         layout.addWidget(self.lines_table)
 
         return panel
+
+    def _build_return_form(self) -> QWidget:
+        box = QGroupBox("Process Return")
+        layout = QVBoxLayout(box)
+
+        self.selected_line_label = QLabel("Select a line item to return.")
+        self.selected_line_label.setWordWrap(True)
+        layout.addWidget(self.selected_line_label)
+
+        self.reason_input = QTextEdit()
+        self.reason_input.setPlaceholderText("Reason for return...")
+        self.reason_input.setFixedHeight(60)
+        layout.addWidget(self.reason_input)
+
+        self.refund_method_combo = QComboBox()
+        for method in PaymentMethod:
+            if method != PaymentMethod.OLD_GOLD:
+                self.refund_method_combo.addItem(method.value, method)
+        layout.addWidget(QLabel("Refund method:"))
+        layout.addWidget(self.refund_method_combo)
+
+        self.refund_amount_input = QDoubleSpinBox()
+        self.refund_amount_input.setRange(0, 999_999_999)
+        self.refund_amount_input.setDecimals(2)
+        layout.addWidget(QLabel("Refund amount (Rs.):"))
+        layout.addWidget(self.refund_amount_input)
+
+        self.restock_checkbox = QCheckBox("Item is resellable (restock to AVAILABLE)")
+        self.restock_checkbox.setChecked(True)
+        layout.addWidget(self.restock_checkbox)
+
+        process_button = QPushButton("Process Return")
+        process_button.clicked.connect(self._handle_process_return)
+        layout.addWidget(process_button)
+
+        layout.addStretch()
+        return box
