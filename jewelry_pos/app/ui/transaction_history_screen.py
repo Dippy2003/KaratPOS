@@ -157,3 +157,53 @@ class TransactionHistoryScreen(QWidget):
             self.invoice_table.setItem(i, 3, QTableWidgetItem(f"Rs. {row.grand_total:,.2f}"))
             self.invoice_table.setItem(i, 4, QTableWidgetItem(row.status.value))
             self.invoice_table.item(i, 0).setData(Qt.ItemDataRole.UserRole, row.id)
+
+    def _selected_invoice_id(self) -> int | None:
+        selected = self.invoice_table.selectedItems()
+        if not selected:
+            return None
+        return self.invoice_table.item(selected[0].row(), 0).data(Qt.ItemDataRole.UserRole)
+
+    def _on_selection_changed(self) -> None:
+        invoice_id = self._selected_invoice_id()
+        if invoice_id is None:
+            self.detail_text.clear()
+            self.reprint_button.setEnabled(False)
+            self.cancel_button.setEnabled(False)
+            return
+
+        detail = get_invoice_detail(invoice_id)
+        if detail is None:
+            return
+
+        lines_text = "\n".join(
+            f"  {line.item_name} ({line.item_code}) - {line.net_weight_g}g {line.purity} "
+            f"@ Rs.{line.gold_rate_used:,.2f}/g -> Rs. {line.line_total:,.2f}"
+            + (" [RETURNED]" if line.is_returned else "")
+            for line in detail.lines
+        )
+        payments_text = ", ".join(f"{p.method} Rs.{p.amount:,.2f}" for p in detail.payments)
+
+        self.detail_text.setPlainText(
+            f"Invoice: {detail.invoice_no}\n"
+            f"Date: {detail.invoice_datetime.strftime('%d/%m/%Y %I:%M %p')}\n"
+            f"Customer: {detail.customer_name or 'Walk-in'}\n"
+            f"Cashier: {detail.cashier_name}\n"
+            f"Status: {detail.status.value}\n\n"
+            f"Items:\n{lines_text}\n\n"
+            f"Subtotal: Rs. {detail.subtotal:,.2f}\n"
+            f"Discount: Rs. {detail.discount_total:,.2f}\n"
+            f"Tax: Rs. {detail.tax_total:,.2f}\n"
+            f"Old gold credit: Rs. {detail.old_gold_credit:,.2f}\n"
+            f"GRAND TOTAL: Rs. {detail.grand_total:,.2f}\n"
+            f"Paid: {payments_text}\n"
+            f"Balance returned: Rs. {detail.balance_returned:,.2f}"
+        )
+
+        self.reprint_button.setEnabled(True)
+        can_cancel = (
+            self.current_user_role == UserRole.ADMIN
+            and detail.status != InvoiceStatus.CANCELLED
+            and detail.invoice_datetime.date() == date.today()
+        )
+        self.cancel_button.setEnabled(can_cancel)
