@@ -23,11 +23,13 @@ from PySide6.QtWidgets import (
 
 from app.database.models import UserRole
 from app.services.auth_service import AuthResult, log_logout
+from app.ui.customers_screen import CustomersScreen
 from app.ui.dashboard_screen import DashboardScreen
 from app.ui.gold_rate_screen import GoldRateScreen
 from app.ui.inventory_screen import InventoryScreen
 from app.ui.pos_screen import POSScreen
 from app.ui.rate_header_widget import RateHeaderWidget
+from app.ui.transaction_history_screen import TransactionHistoryScreen
 from app.utils.config import APP_NAME
 
 # Each nav entry: (label, roles allowed to see it)
@@ -139,6 +141,10 @@ class MainWindow(QMainWindow):
                 self.auth_result.full_name,
                 on_sale_completed=self._handle_sale_completed,
             )
+        if label == "Customers":
+            return CustomersScreen()
+        if label == "Transaction History":
+            return TransactionHistoryScreen(self.auth_result.user_id, self.auth_result.role)
         return self._placeholder_page(label)
 
     def _handle_sale_completed(self) -> None:

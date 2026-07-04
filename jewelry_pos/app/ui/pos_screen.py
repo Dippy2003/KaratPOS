@@ -34,9 +34,10 @@ from app.services.gold_rate_service import get_latest_rate
 from app.services.item_service import get_item_by_code
 from app.services.pricing_service import calculate_item_price
 from app.services.reservation_service import ReservationError, release_item, reserve_item
-from app.services.sales_service import PaymentInput, SaleError, complete_sale
+from app.services.sales_service import OldGoldExchangeInput, PaymentInput, SaleError, complete_sale
 from app.services.settings_service import get_setting
 from app.printing.receipt_pdf import ReceiptData, ReceiptLine, ReceiptPaymentLine, generate_receipt_pdf
+from app.ui.old_gold_dialog import OldGoldDialog
 from app.ui.webcam_scan_dialog import WebcamScanDialog
 
 
@@ -48,6 +49,7 @@ class POSScreen(QWidget):
         self.on_sale_completed = on_sale_completed
         self.cart = Cart()
         self.selected_customer = None  # CustomerRow | None
+        self.old_gold_input: OldGoldExchangeInput | None = None
         self._build_ui()
 
     def _build_ui(self) -> None:
@@ -244,12 +246,29 @@ class POSScreen(QWidget):
         add_payment_button.clicked.connect(lambda: self._add_payment_row())
         layout.addWidget(add_payment_button)
 
+        old_gold_button = QPushButton("Old Gold Exchange")
+        old_gold_button.clicked.connect(self._handle_open_old_gold_dialog)
+        layout.addWidget(old_gold_button)
+
+        self.old_gold_credit_label = QLabel("")
+        self.old_gold_credit_label.setStyleSheet("color: #1b5e20; font-weight: bold;")
+        layout.addWidget(self.old_gold_credit_label)
+
         self.paid_total_label = QLabel("Total Paid: Rs. 0.00")
         self.balance_label = QLabel("Balance to Return: Rs. 0.00")
         layout.addWidget(self.paid_total_label)
         layout.addWidget(self.balance_label)
 
         return box
+
+    def _handle_open_old_gold_dialog(self) -> None:
+        dialog = OldGoldDialog(self)
+        if dialog.exec() == OldGoldDialog.DialogCode.Accepted and dialog.result_input:
+            self.old_gold_input = dialog.result_input
+            self.old_gold_credit_label.setText(
+                f"Old gold credit: Rs. {dialog.result_credit_value:,.2f} ({dialog.result_input.description})"
+            )
+            self._update_totals()
 
     def _add_payment_row(self) -> None:
         row = QHBoxLayout()
@@ -295,7 +314,8 @@ class POSScreen(QWidget):
         self.subtotal_label.setText(f"Subtotal: Rs. {subtotal:,.2f}")
         self.grand_total_label.setText(f"GRAND TOTAL: Rs. {grand_total:,.2f}")
 
-        paid_total = sum((Decimal(str(amount.value())) for _, amount in self.payment_rows), Decimal("0"))
+        old_gold_credit = self.old_gold_input.credit_value if self.old_gold_input else Decimal("0")
+        paid_total = sum((Decimal(str(amount.value())) for _, amount in self.payment_rows), Decimal("0")) + old_gold_credit
         balance = paid_total - grand_total
         self.paid_total_label.setText(f"Total Paid: Rs. {paid_total:,.2f}")
         self.balance_label.setText(f"Balance to Return: Rs. {max(balance, Decimal('0')):,.2f}")
@@ -313,6 +333,8 @@ class POSScreen(QWidget):
             if amount.value() > 0
         ]
 
+        old_gold_credit = self.old_gold_input.credit_value if self.old_gold_input else Decimal("0")
+
         try:
             result = complete_sale(
                 cart=self.cart,
@@ -321,6 +343,8 @@ class POSScreen(QWidget):
                 invoice_discount=discount,
                 tax_percent=tax_percent,
                 payments=payments,
+                old_gold=self.old_gold_input,
+                old_gold_credit=old_gold_credit,
             )
         except SaleError as exc:
             QMessageBox.warning(self, "Cannot Complete Sale", str(exc))
@@ -374,7 +398,7 @@ class POSScreen(QWidget):
             subtotal=self.cart.subtotal,
             discount_total=discount,
             tax_total=tax_total,
-            old_gold_credit=Decimal("0"),
+            old_gold_credit=self.old_gold_input.credit_value if self.old_gold_input else Decimal("0"),
             grand_total=result.grand_total,
             payments=[ReceiptPaymentLine(method=p.method.value, amount=p.amount) for p in payments],
             balance_returned=result.balance_returned,
@@ -391,6 +415,8 @@ class POSScreen(QWidget):
         self.selected_customer = None
         self.customer_phone_input.clear()
         self.customer_label.setText("Walk-in customer")
+        self.old_gold_input = None
+        self.old_gold_credit_label.setText("")
         if self.on_sale_completed:
             self.on_sale_completed()
         self.code_input.setFocus()
