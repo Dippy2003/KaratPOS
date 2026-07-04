@@ -93,9 +93,12 @@ class POSScreen(QWidget):
 
         return panel
 
-    def _handle_add_by_code(self) -> None:
-        code = self.code_input.text().strip()
-        self.code_input.clear()
+    def _handle_add_by_code(self, code: str | None = None) -> None:
+        if code is None:
+            code = self.code_input.text().strip()
+            self.code_input.clear()
+        else:
+            code = code.strip()
         if not code:
             return
 
