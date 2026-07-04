@@ -333,6 +333,8 @@ class POSScreen(QWidget):
             if amount.value() > 0
         ]
 
+        old_gold_credit = self.old_gold_input.credit_value if self.old_gold_input else Decimal("0")
+
         try:
             result = complete_sale(
                 cart=self.cart,
@@ -341,6 +343,8 @@ class POSScreen(QWidget):
                 invoice_discount=discount,
                 tax_percent=tax_percent,
                 payments=payments,
+                old_gold=self.old_gold_input,
+                old_gold_credit=old_gold_credit,
             )
         except SaleError as exc:
             QMessageBox.warning(self, "Cannot Complete Sale", str(exc))
