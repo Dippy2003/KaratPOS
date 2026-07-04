@@ -40,3 +40,13 @@ class WebcamScanDialog(QDialog):
         close_button = QPushButton("Close")
         close_button.clicked.connect(self.accept)
         layout.addWidget(close_button)
+
+    def _start_camera(self) -> None:
+        if not self.scanner.open():
+            self.status_label.setText("Could not open the webcam. Check that it's connected and not in use.")
+            QMessageBox.warning(self, "Camera Unavailable", "Could not open the webcam.")
+            return
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self._update_frame)
+        self.timer.start(30)  # ~33 fps
