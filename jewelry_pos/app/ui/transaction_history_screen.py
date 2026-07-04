@@ -98,3 +98,40 @@ class TransactionHistoryScreen(QWidget):
         layout.addWidget(search_button)
 
         return row
+
+    def _build_list_panel(self) -> QWidget:
+        panel = QWidget()
+        layout = QVBoxLayout(panel)
+
+        self.invoice_table = QTableWidget(0, 5)
+        self.invoice_table.setHorizontalHeaderLabels(["Invoice No", "Date", "Customer", "Total", "Status"])
+        self.invoice_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.invoice_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.invoice_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.invoice_table.itemSelectionChanged.connect(self._on_selection_changed)
+        layout.addWidget(self.invoice_table)
+
+        return panel
+
+    def _build_detail_panel(self) -> QWidget:
+        panel = QWidget()
+        layout = QVBoxLayout(panel)
+
+        self.detail_text = QTextEdit()
+        self.detail_text.setReadOnly(True)
+        layout.addWidget(self.detail_text)
+
+        button_row = QHBoxLayout()
+        self.reprint_button = QPushButton("Reprint Receipt")
+        self.reprint_button.clicked.connect(self._handle_reprint)
+        self.reprint_button.setEnabled(False)
+        button_row.addWidget(self.reprint_button)
+
+        self.cancel_button = QPushButton("Cancel Invoice (Admin, same-day)")
+        self.cancel_button.clicked.connect(self._handle_cancel)
+        self.cancel_button.setEnabled(False)
+        self.cancel_button.setVisible(self.current_user_role == UserRole.ADMIN)
+        button_row.addWidget(self.cancel_button)
+
+        layout.addLayout(button_row)
+        return panel
