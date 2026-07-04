@@ -113,7 +113,7 @@ class InventoryScreen(QWidget):
 
     def _update_price_preview(self) -> None:
         try:
-            purity: Purity = self.purity_combo.currentData()
+            purity: Purity = combo_enum_data(self.purity_combo, Purity)
             net_weight = Decimal(self.net_weight_input.text() or "0")
             making_value = Decimal(self.making_charge_value_input.text() or "0")
             stone_value = Decimal(self.stone_value_input.text() or "0")
