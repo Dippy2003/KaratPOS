@@ -70,3 +70,45 @@ class OldGoldDialog(QDialog):
         layout.addWidget(confirm_button)
 
         self._update_default_rate()
+
+    def _update_default_rate(self) -> None:
+        purity: Purity = self.purity_combo.currentData()
+        try:
+            default_rate = get_default_buy_rate(purity)
+        except OldGoldError as exc:
+            self.credit_preview_label.setText(str(exc))
+            return
+        self.rate_input.setValue(float(default_rate))
+        self._update_credit_preview()
+
+    def _update_credit_preview(self) -> None:
+        try:
+            weight = Decimal(str(self.weight_input.value()))
+            rate = Decimal(str(self.rate_input.value()))
+            credit = calculate_credit_value(weight, rate)
+            self.credit_preview_label.setText(f"Credit value: Rs. {credit:,.2f}")
+        except OldGoldError:
+            self.credit_preview_label.setText("Credit value: --")
+
+    def _handle_confirm(self) -> None:
+        if not self.description_input.text().strip():
+            QMessageBox.warning(self, "Missing Description", "Please describe the old gold item.")
+            return
+
+        try:
+            weight = Decimal(str(self.weight_input.value()))
+            rate = Decimal(str(self.rate_input.value()))
+            credit = calculate_credit_value(weight, rate)
+        except OldGoldError as exc:
+            QMessageBox.warning(self, "Invalid Input", str(exc))
+            return
+
+        self.result_input = OldGoldExchangeInput(
+            description=self.description_input.text().strip(),
+            gross_weight_g=weight,
+            assessed_purity=self.purity_combo.currentData(),
+            buy_rate_per_gram=rate,
+            credit_value=credit,
+        )
+        self.result_credit_value = credit
+        self.accept()
