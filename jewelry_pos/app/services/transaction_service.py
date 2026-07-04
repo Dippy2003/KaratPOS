@@ -74,3 +74,87 @@ def search_invoices(
                 )
             )
         return rows
+
+
+@dataclass(frozen=True)
+class InvoiceLineDetail:
+    item_code: str
+    item_name: str
+    net_weight_g: Decimal
+    purity: str
+    gold_rate_used: Decimal
+    gold_value: Decimal
+    making_charge: Decimal
+    stone_value: Decimal
+    line_discount: Decimal
+    line_total: Decimal
+    is_returned: bool
+
+
+@dataclass(frozen=True)
+class PaymentDetail:
+    method: str
+    amount: Decimal
+
+
+@dataclass(frozen=True)
+class InvoiceDetail:
+    id: int
+    invoice_no: str
+    invoice_datetime: datetime
+    customer_name: str | None
+    cashier_name: str
+    subtotal: Decimal
+    discount_total: Decimal
+    tax_total: Decimal
+    old_gold_credit: Decimal
+    grand_total: Decimal
+    amount_paid: Decimal
+    balance_returned: Decimal
+    status: InvoiceStatus
+    lines: list[InvoiceLineDetail]
+    payments: list[PaymentDetail]
+
+
+def get_invoice_detail(invoice_id: int) -> InvoiceDetail | None:
+    """Full snapshot detail view -- reads only frozen invoice_items data, never recalculates."""
+    with get_session() as session:
+        invoice = session.get(Invoice, invoice_id)
+        if invoice is None or invoice.is_deleted:
+            return None
+
+        lines = [
+            InvoiceLineDetail(
+                item_code=line.item.item_code,
+                item_name=line.item.name,
+                net_weight_g=Decimal(line.net_weight_g),
+                purity=line.purity.value,
+                gold_rate_used=Decimal(line.gold_rate_used),
+                gold_value=Decimal(line.gold_value),
+                making_charge=Decimal(line.making_charge),
+                stone_value=Decimal(line.stone_value),
+                line_discount=Decimal(line.line_discount),
+                line_total=Decimal(line.line_total),
+                is_returned=line.is_returned,
+            )
+            for line in invoice.items
+        ]
+        payments = [PaymentDetail(method=p.method.value, amount=Decimal(p.amount)) for p in invoice.payments]
+
+        return InvoiceDetail(
+            id=invoice.id,
+            invoice_no=invoice.invoice_no,
+            invoice_datetime=invoice.invoice_datetime,
+            customer_name=invoice.customer.name if invoice.customer else None,
+            cashier_name=invoice.cashier.full_name,
+            subtotal=Decimal(invoice.subtotal),
+            discount_total=Decimal(invoice.discount_total),
+            tax_total=Decimal(invoice.tax_total),
+            old_gold_credit=Decimal(invoice.old_gold_credit),
+            grand_total=Decimal(invoice.grand_total),
+            amount_paid=Decimal(invoice.amount_paid),
+            balance_returned=Decimal(invoice.balance_returned),
+            status=invoice.status,
+            lines=lines,
+            payments=payments,
+        )
