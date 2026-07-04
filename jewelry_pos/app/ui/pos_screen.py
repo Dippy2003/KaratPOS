@@ -37,6 +37,7 @@ from app.services.reservation_service import ReservationError, release_item, res
 from app.services.sales_service import PaymentInput, SaleError, complete_sale
 from app.services.settings_service import get_setting
 from app.printing.receipt_pdf import ReceiptData, ReceiptLine, ReceiptPaymentLine, generate_receipt_pdf
+from app.ui.webcam_scan_dialog import WebcamScanDialog
 
 
 class POSScreen(QWidget):
