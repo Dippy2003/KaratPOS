@@ -398,7 +398,7 @@ class POSScreen(QWidget):
             subtotal=self.cart.subtotal,
             discount_total=discount,
             tax_total=tax_total,
-            old_gold_credit=Decimal("0"),
+            old_gold_credit=self.old_gold_input.credit_value if self.old_gold_input else Decimal("0"),
             grand_total=result.grand_total,
             payments=[ReceiptPaymentLine(method=p.method.value, amount=p.amount) for p in payments],
             balance_returned=result.balance_returned,
@@ -415,6 +415,8 @@ class POSScreen(QWidget):
         self.selected_customer = None
         self.customer_phone_input.clear()
         self.customer_label.setText("Walk-in customer")
+        self.old_gold_input = None
+        self.old_gold_credit_label.setText("")
         if self.on_sale_completed:
             self.on_sale_completed()
         self.code_input.setFocus()
