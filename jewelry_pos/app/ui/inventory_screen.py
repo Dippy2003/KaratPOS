@@ -154,10 +154,10 @@ class InventoryScreen(QWidget):
             item_code = create_item(
                 name=self.name_input.text(),
                 category_id=self.category_combo.currentData(),
-                purity=self.purity_combo.currentData(),
+                purity=combo_enum_data(self.purity_combo, Purity),
                 gross_weight_g=gross_weight,
                 net_weight_g=net_weight,
-                making_charge_type=self.making_charge_type_combo.currentData(),
+                making_charge_type=combo_enum_data(self.making_charge_type_combo, MakingChargeType),
                 making_charge_value=making_value,
                 stone_value_total=stone_value,
                 hallmark_certificate_no=self.hallmark_input.text() or None,
