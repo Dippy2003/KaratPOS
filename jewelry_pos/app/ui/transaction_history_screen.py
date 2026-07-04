@@ -207,3 +207,58 @@ class TransactionHistoryScreen(QWidget):
             and detail.invoice_datetime.date() == date.today()
         )
         self.cancel_button.setEnabled(can_cancel)
+
+    def _handle_reprint(self) -> None:
+        invoice_id = self._selected_invoice_id()
+        if invoice_id is None:
+            return
+        detail = get_invoice_detail(invoice_id)
+        if detail is None:
+            return
+
+        receipt_lines = [
+            ReceiptLine(
+                item_name=line.item_name,
+                item_code=line.item_code,
+                net_weight_g=line.net_weight_g,
+                purity=line.purity,
+                gold_rate_used=line.gold_rate_used,
+                gold_value=line.gold_value,
+                making_charge=line.making_charge,
+                stone_value=line.stone_value,
+                line_total=line.line_total,
+            )
+            for line in detail.lines
+        ]
+        data = ReceiptData(
+            shop_name=get_setting("shop_name"),
+            shop_address=get_setting("shop_address"),
+            shop_phone=get_setting("shop_phone"),
+            invoice_no=detail.invoice_no,
+            invoice_datetime=detail.invoice_datetime,
+            cashier_name=detail.cashier_name,
+            customer_name=detail.customer_name,
+            lines=receipt_lines,
+            subtotal=detail.subtotal,
+            discount_total=detail.discount_total,
+            tax_total=detail.tax_total,
+            old_gold_credit=detail.old_gold_credit,
+            grand_total=detail.grand_total,
+            payments=[ReceiptPaymentLine(method=p.method, amount=p.amount) for p in detail.payments],
+            balance_returned=detail.balance_returned,
+            footer_text=get_setting("invoice_footer_text"),
+            is_reprint=True,
+        )
+        path = generate_receipt_pdf(data)
+
+        with get_session() as session:
+            session.add(
+                AuditLog(
+                    user_id=self.current_user_id,
+                    action=f"Reprinted receipt for invoice {detail.invoice_no}",
+                    entity_type="Invoice",
+                    entity_id=detail.id,
+                )
+            )
+
+        QMessageBox.information(self, "Reprinted", f"Reprint saved to:\n{path}")
