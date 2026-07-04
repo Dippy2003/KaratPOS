@@ -146,6 +146,8 @@ class MainWindow(QMainWindow):
             return CustomersScreen()
         if label == "Transaction History":
             return TransactionHistoryScreen(self.auth_result.user_id, self.auth_result.role)
+        if label == "Returns & Exchanges":
+            return ReturnsScreen(self.auth_result.user_id)
         return self._placeholder_page(label)
 
     def _handle_sale_completed(self) -> None:
