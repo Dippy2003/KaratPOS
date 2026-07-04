@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import QDate
+from PySide6.QtCore import QDate, Qt
 
 from app.database.models import AuditLog, InvoiceStatus, UserRole
 from app.database.db import get_session
@@ -135,3 +135,25 @@ class TransactionHistoryScreen(QWidget):
 
         layout.addLayout(button_row)
         return panel
+
+    def _reload_list(self) -> None:
+        qdate_from = self.date_from_input.date().toPython()
+        qdate_to = self.date_to_input.date().toPython()
+        status = self.status_filter_combo.currentData()
+
+        rows = search_invoices(
+            invoice_no=self.invoice_no_input.text(),
+            customer_name=self.customer_input.text(),
+            date_from=qdate_from,
+            date_to=qdate_to,
+            status=status,
+        )
+
+        self.invoice_table.setRowCount(len(rows))
+        for i, row in enumerate(rows):
+            self.invoice_table.setItem(i, 0, QTableWidgetItem(row.invoice_no))
+            self.invoice_table.setItem(i, 1, QTableWidgetItem(row.invoice_datetime.strftime("%d/%m/%Y %I:%M %p")))
+            self.invoice_table.setItem(i, 2, QTableWidgetItem(row.customer_name or "Walk-in"))
+            self.invoice_table.setItem(i, 3, QTableWidgetItem(f"Rs. {row.grand_total:,.2f}"))
+            self.invoice_table.setItem(i, 4, QTableWidgetItem(row.status.value))
+            self.invoice_table.item(i, 0).setData(Qt.ItemDataRole.UserRole, row.id)
