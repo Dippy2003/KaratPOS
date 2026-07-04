@@ -217,7 +217,7 @@ class InventoryScreen(QWidget):
 
     def _reload_list(self) -> None:
         query = self.search_input.text()
-        status = self.status_filter_combo.currentData()
+        status = combo_enum_data(self.status_filter_combo, ItemStatus)
         rows = search_items(query=query, status=status)
 
         self.item_table.setRowCount(len(rows))
