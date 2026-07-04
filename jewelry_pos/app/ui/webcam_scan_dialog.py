@@ -50,3 +50,35 @@ class WebcamScanDialog(QDialog):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._update_frame)
         self.timer.start(30)  # ~33 fps
+
+    def _update_frame(self) -> None:
+        frame = self.scanner.read_frame()
+        if frame is None:
+            return
+
+        codes = self.scanner.decode_frame(frame)
+        for code in codes:
+            x, y, w, h = code.rect
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(frame, code.data, (x, max(y - 10, 0)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
+        self._display_frame(frame)
+
+        if codes:
+            newly_scanned = codes[0].data
+            if newly_scanned != self._last_scanned_code:
+                self._last_scanned_code = newly_scanned
+                self.status_label.setText(f"Scanned: {newly_scanned}")
+                self.code_scanned.emit(newly_scanned)
+        else:
+            self._last_scanned_code = None
+
+    def _display_frame(self, frame) -> None:
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        height, width, channels = rgb_frame.shape
+        bytes_per_line = channels * width
+        image = QImage(rgb_frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
+        pixmap = QPixmap.fromImage(image).scaled(
+            self.video_label.width(), self.video_label.height()
+        )
+        self.video_label.setPixmap(pixmap)
