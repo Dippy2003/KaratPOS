@@ -73,6 +73,11 @@ class POSScreen(QWidget):
         self.code_input.returnPressed.connect(self._handle_add_by_code)
         self.code_input.setFocus()
         entry_row.addWidget(self.code_input)
+
+        scan_button = QPushButton("Scan with Webcam")
+        scan_button.clicked.connect(self._handle_open_webcam_scan)
+        entry_row.addWidget(scan_button)
+
         layout.addLayout(entry_row)
 
         self.cart_table = QTableWidget(0, 5)
