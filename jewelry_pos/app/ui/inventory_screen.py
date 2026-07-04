@@ -31,6 +31,7 @@ from app.services.gold_rate_service import get_latest_rate
 from app.services.item_service import ValidationError, create_item, search_items
 from app.services.pricing_service import calculate_item_price
 from app.printing.tag_printer import TagData, generate_tag_sheet_pdf
+from app.utils.qt_helpers import combo_enum_data
 
 
 class InventoryScreen(QWidget):
