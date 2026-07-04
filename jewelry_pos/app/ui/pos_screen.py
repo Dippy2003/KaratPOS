@@ -34,9 +34,10 @@ from app.services.gold_rate_service import get_latest_rate
 from app.services.item_service import get_item_by_code
 from app.services.pricing_service import calculate_item_price
 from app.services.reservation_service import ReservationError, release_item, reserve_item
-from app.services.sales_service import PaymentInput, SaleError, complete_sale
+from app.services.sales_service import OldGoldExchangeInput, PaymentInput, SaleError, complete_sale
 from app.services.settings_service import get_setting
 from app.printing.receipt_pdf import ReceiptData, ReceiptLine, ReceiptPaymentLine, generate_receipt_pdf
+from app.ui.old_gold_dialog import OldGoldDialog
 from app.ui.webcam_scan_dialog import WebcamScanDialog
 
 
