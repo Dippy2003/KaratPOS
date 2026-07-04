@@ -82,3 +82,9 @@ class WebcamScanDialog(QDialog):
             self.video_label.width(), self.video_label.height()
         )
         self.video_label.setPixmap(pixmap)
+
+    def closeEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        if hasattr(self, "timer"):
+            self.timer.stop()
+        self.scanner.release()
+        super().closeEvent(event)
