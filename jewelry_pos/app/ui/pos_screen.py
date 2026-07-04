@@ -246,12 +246,29 @@ class POSScreen(QWidget):
         add_payment_button.clicked.connect(lambda: self._add_payment_row())
         layout.addWidget(add_payment_button)
 
+        old_gold_button = QPushButton("Old Gold Exchange")
+        old_gold_button.clicked.connect(self._handle_open_old_gold_dialog)
+        layout.addWidget(old_gold_button)
+
+        self.old_gold_credit_label = QLabel("")
+        self.old_gold_credit_label.setStyleSheet("color: #1b5e20; font-weight: bold;")
+        layout.addWidget(self.old_gold_credit_label)
+
         self.paid_total_label = QLabel("Total Paid: Rs. 0.00")
         self.balance_label = QLabel("Balance to Return: Rs. 0.00")
         layout.addWidget(self.paid_total_label)
         layout.addWidget(self.balance_label)
 
         return box
+
+    def _handle_open_old_gold_dialog(self) -> None:
+        dialog = OldGoldDialog(self)
+        if dialog.exec() == OldGoldDialog.DialogCode.Accepted and dialog.result_input:
+            self.old_gold_input = dialog.result_input
+            self.old_gold_credit_label.setText(
+                f"Old gold credit: Rs. {dialog.result_credit_value:,.2f} ({dialog.result_input.description})"
+            )
+            self._update_totals()
 
     def _add_payment_row(self) -> None:
         row = QHBoxLayout()
