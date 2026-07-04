@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 from app.database.models import Purity
 from app.services.old_gold_service import OldGoldError, calculate_credit_value, get_default_buy_rate
 from app.services.sales_service import OldGoldExchangeInput
+from app.utils.qt_helpers import combo_enum_data
 
 
 class OldGoldDialog(QDialog):
@@ -72,7 +73,7 @@ class OldGoldDialog(QDialog):
         self._update_default_rate()
 
     def _update_default_rate(self) -> None:
-        purity: Purity = self.purity_combo.currentData()
+        purity: Purity = combo_enum_data(self.purity_combo, Purity)
         try:
             default_rate = get_default_buy_rate(purity)
         except OldGoldError as exc:
@@ -106,7 +107,7 @@ class OldGoldDialog(QDialog):
         self.result_input = OldGoldExchangeInput(
             description=self.description_input.text().strip(),
             gross_weight_g=weight,
-            assessed_purity=self.purity_combo.currentData(),
+            assessed_purity=combo_enum_data(self.purity_combo, Purity),
             buy_rate_per_gram=rate,
             credit_value=credit,
         )

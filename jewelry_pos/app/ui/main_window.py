@@ -29,6 +29,7 @@ from app.ui.gold_rate_screen import GoldRateScreen
 from app.ui.inventory_screen import InventoryScreen
 from app.ui.pos_screen import POSScreen
 from app.ui.rate_header_widget import RateHeaderWidget
+from app.ui.returns_screen import ReturnsScreen
 from app.ui.transaction_history_screen import TransactionHistoryScreen
 from app.utils.config import APP_NAME
 
@@ -145,6 +146,8 @@ class MainWindow(QMainWindow):
             return CustomersScreen()
         if label == "Transaction History":
             return TransactionHistoryScreen(self.auth_result.user_id, self.auth_result.role)
+        if label == "Returns & Exchanges":
+            return ReturnsScreen(self.auth_result.user_id)
         return self._placeholder_page(label)
 
     def _handle_sale_completed(self) -> None:

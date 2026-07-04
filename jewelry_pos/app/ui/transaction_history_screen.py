@@ -37,6 +37,7 @@ from app.services.transaction_service import (
     search_invoices,
 )
 from app.printing.receipt_pdf import ReceiptData, ReceiptLine, ReceiptPaymentLine, generate_receipt_pdf
+from app.utils.qt_helpers import combo_enum_data
 
 
 class TransactionHistoryScreen(QWidget):
@@ -139,7 +140,7 @@ class TransactionHistoryScreen(QWidget):
     def _reload_list(self) -> None:
         qdate_from = self.date_from_input.date().toPython()
         qdate_to = self.date_to_input.date().toPython()
-        status = self.status_filter_combo.currentData()
+        status = combo_enum_data(self.status_filter_combo, InvoiceStatus)
 
         rows = search_invoices(
             invoice_no=self.invoice_no_input.text(),
