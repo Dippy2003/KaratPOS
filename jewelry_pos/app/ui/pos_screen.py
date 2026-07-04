@@ -314,7 +314,8 @@ class POSScreen(QWidget):
         self.subtotal_label.setText(f"Subtotal: Rs. {subtotal:,.2f}")
         self.grand_total_label.setText(f"GRAND TOTAL: Rs. {grand_total:,.2f}")
 
-        paid_total = sum((Decimal(str(amount.value())) for _, amount in self.payment_rows), Decimal("0"))
+        old_gold_credit = self.old_gold_input.credit_value if self.old_gold_input else Decimal("0")
+        paid_total = sum((Decimal(str(amount.value())) for _, amount in self.payment_rows), Decimal("0")) + old_gold_credit
         balance = paid_total - grand_total
         self.paid_total_label.setText(f"Total Paid: Rs. {paid_total:,.2f}")
         self.balance_label.setText(f"Balance to Return: Rs. {max(balance, Decimal('0')):,.2f}")
