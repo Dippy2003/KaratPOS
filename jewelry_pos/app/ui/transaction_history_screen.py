@@ -262,3 +262,30 @@ class TransactionHistoryScreen(QWidget):
             )
 
         QMessageBox.information(self, "Reprinted", f"Reprint saved to:\n{path}")
+
+    def _handle_cancel(self) -> None:
+        invoice_id = self._selected_invoice_id()
+        if invoice_id is None:
+            return
+
+        reason, ok = QInputDialog.getText(self, "Cancel Invoice", "Reason for cancellation:")
+        if not ok or not reason.strip():
+            return
+
+        confirm = QMessageBox.question(
+            self, "Confirm Cancellation",
+            "This will reverse all sold items back to available stock. Continue?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if confirm != QMessageBox.StandardButton.Yes:
+            return
+
+        try:
+            cancel_invoice(invoice_id, reason, self.current_user_id, self.current_user_role)
+        except TransactionError as exc:
+            QMessageBox.warning(self, "Cannot Cancel", str(exc))
+            return
+
+        QMessageBox.information(self, "Invoice Cancelled", "The invoice has been cancelled and stock reversed.")
+        self._reload_list()
+        self.detail_text.clear()
