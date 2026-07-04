@@ -29,6 +29,7 @@ from app.ui.gold_rate_screen import GoldRateScreen
 from app.ui.inventory_screen import InventoryScreen
 from app.ui.pos_screen import POSScreen
 from app.ui.rate_header_widget import RateHeaderWidget
+from app.ui.returns_screen import ReturnsScreen
 from app.ui.transaction_history_screen import TransactionHistoryScreen
 from app.utils.config import APP_NAME
 
