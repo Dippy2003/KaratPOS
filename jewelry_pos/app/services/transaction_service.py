@@ -158,3 +158,44 @@ def get_invoice_detail(invoice_id: int) -> InvoiceDetail | None:
             lines=lines,
             payments=payments,
         )
+
+
+def cancel_invoice(invoice_id: int, reason: str, cancelled_by_user_id: int, cancelled_by_role: UserRole) -> None:
+    """
+    Same-day, ADMIN-only invoice cancellation. Reverses SOLD -> AVAILABLE
+    on every line item and marks the invoice CANCELLED. Distinct from a
+    Return: cancellation is a full same-day undo, not a partial refund.
+    """
+    if cancelled_by_role != UserRole.ADMIN:
+        raise TransactionError("Only an administrator can cancel an invoice.")
+    if not reason or not reason.strip():
+        raise TransactionError("A cancellation reason is required.")
+
+    with get_session() as session:
+        invoice = session.get(Invoice, invoice_id)
+        if invoice is None or invoice.is_deleted:
+            raise TransactionError("Invoice not found.")
+        if invoice.status == InvoiceStatus.CANCELLED:
+            raise TransactionError("This invoice has already been cancelled.")
+        if invoice.invoice_datetime.date() != date.today():
+            raise TransactionError("Only same-day invoices can be cancelled.")
+
+        for line in invoice.items:
+            item = session.get(Item, line.item_id)
+            if item is not None and item.status == ItemStatus.SOLD:
+                item.status = ItemStatus.AVAILABLE
+                item.sold_at = None
+                item.sold_to_customer_id = None
+                item.sold_by_user_id = None
+
+        invoice.status = InvoiceStatus.CANCELLED
+        invoice.cancel_reason = reason.strip()
+
+        session.add(
+            AuditLog(
+                user_id=cancelled_by_user_id,
+                action=f"Cancelled invoice {invoice.invoice_no}: {reason.strip()}",
+                entity_type="Invoice",
+                entity_id=invoice.id,
+            )
+        )
