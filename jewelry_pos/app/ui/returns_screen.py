@@ -114,3 +114,31 @@ class ReturnsScreen(QWidget):
 
         layout.addStretch()
         return box
+
+    def _handle_find_invoice(self) -> None:
+        invoice_no = self.invoice_no_input.text().strip()
+        if not invoice_no:
+            return
+
+        matches = search_invoices(invoice_no=invoice_no)
+        if not matches:
+            QMessageBox.warning(self, "Not Found", f"No invoice found matching '{invoice_no}'.")
+            return
+
+        detail = get_invoice_detail(matches[0].id)
+        if detail is None:
+            return
+
+        self.current_invoice_detail = detail
+        self.invoice_summary_label.setText(
+            f"{detail.invoice_no} - {detail.customer_name or 'Walk-in'} - "
+            f"Grand total: Rs. {detail.grand_total:,.2f} - Status: {detail.status.value}"
+        )
+
+        self.lines_table.setRowCount(len(detail.lines))
+        for i, line in enumerate(detail.lines):
+            self.lines_table.setItem(i, 0, QTableWidgetItem(line.item_name))
+            self.lines_table.setItem(i, 1, QTableWidgetItem(line.item_code))
+            self.lines_table.setItem(i, 2, QTableWidgetItem(f"Rs. {line.line_total:,.2f}"))
+            self.lines_table.setItem(i, 3, QTableWidgetItem("Yes" if line.is_returned else "No"))
+            self.lines_table.item(i, 0).setData(Qt.ItemDataRole.UserRole, line.id)
