@@ -142,3 +142,26 @@ class ReturnsScreen(QWidget):
             self.lines_table.setItem(i, 2, QTableWidgetItem(f"Rs. {line.line_total:,.2f}"))
             self.lines_table.setItem(i, 3, QTableWidgetItem("Yes" if line.is_returned else "No"))
             self.lines_table.item(i, 0).setData(Qt.ItemDataRole.UserRole, line.id)
+
+    def _selected_line(self):
+        selected = self.lines_table.selectedItems()
+        if not selected or self.current_invoice_detail is None:
+            return None
+        row = selected[0].row()
+        return self.current_invoice_detail.lines[row]
+
+    def _on_line_selected(self) -> None:
+        line = self._selected_line()
+        if line is None:
+            self.selected_line_label.setText("Select a line item to return.")
+            return
+
+        if line.is_returned:
+            self.selected_line_label.setText(f"{line.item_name} ({line.item_code}) has already been returned.")
+            self.refund_amount_input.setValue(0)
+            return
+
+        self.selected_line_label.setText(
+            f"{line.item_name} ({line.item_code}) - Line total: Rs. {line.line_total:,.2f}"
+        )
+        self.refund_amount_input.setValue(float(line.line_total))
