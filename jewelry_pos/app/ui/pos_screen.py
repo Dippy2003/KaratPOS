@@ -49,6 +49,7 @@ class POSScreen(QWidget):
         self.on_sale_completed = on_sale_completed
         self.cart = Cart()
         self.selected_customer = None  # CustomerRow | None
+        self.old_gold_input: OldGoldExchangeInput | None = None
         self._build_ui()
 
     def _build_ui(self) -> None:
