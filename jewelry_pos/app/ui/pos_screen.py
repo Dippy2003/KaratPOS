@@ -37,6 +37,7 @@ from app.services.reservation_service import ReservationError, release_item, res
 from app.services.sales_service import PaymentInput, SaleError, complete_sale
 from app.services.settings_service import get_setting
 from app.printing.receipt_pdf import ReceiptData, ReceiptLine, ReceiptPaymentLine, generate_receipt_pdf
+from app.ui.webcam_scan_dialog import WebcamScanDialog
 
 
 class POSScreen(QWidget):
@@ -72,6 +73,11 @@ class POSScreen(QWidget):
         self.code_input.returnPressed.connect(self._handle_add_by_code)
         self.code_input.setFocus()
         entry_row.addWidget(self.code_input)
+
+        scan_button = QPushButton("Scan with Webcam")
+        scan_button.clicked.connect(self._handle_open_webcam_scan)
+        entry_row.addWidget(scan_button)
+
         layout.addLayout(entry_row)
 
         self.cart_table = QTableWidget(0, 5)
@@ -87,9 +93,12 @@ class POSScreen(QWidget):
 
         return panel
 
-    def _handle_add_by_code(self) -> None:
-        code = self.code_input.text().strip()
-        self.code_input.clear()
+    def _handle_add_by_code(self, code: str | None = None) -> None:
+        if code is None:
+            code = self.code_input.text().strip()
+            self.code_input.clear()
+        else:
+            code = code.strip()
         if not code:
             return
 
@@ -126,6 +135,11 @@ class POSScreen(QWidget):
         self.cart.add_line(CartLine(item=item_row, price=price))
         self._refresh_cart_table()
         self.code_input.setFocus()
+
+    def _handle_open_webcam_scan(self) -> None:
+        dialog = WebcamScanDialog(self)
+        dialog.code_scanned.connect(self._handle_add_by_code)
+        dialog.exec()
 
     def _refresh_cart_table(self) -> None:
         self.cart_table.setRowCount(len(self.cart.lines))
