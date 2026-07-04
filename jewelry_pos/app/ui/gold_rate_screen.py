@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 
 from app.database.models import Purity
 from app.services.gold_rate_service import DuplicateRateError, add_rate, get_rate_history
+from app.utils.qt_helpers import combo_enum_data
 
 
 class GoldRateScreen(QWidget):
@@ -76,7 +77,7 @@ class GoldRateScreen(QWidget):
         return self.history_table
 
     def _handle_add_rate(self) -> None:
-        purity: Purity = self.purity_combo.currentData()
+        purity: Purity = combo_enum_data(self.purity_combo, Purity)
         raw_rate = self.rate_input.text().strip()
 
         try:

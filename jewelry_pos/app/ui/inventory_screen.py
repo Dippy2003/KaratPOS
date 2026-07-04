@@ -31,6 +31,7 @@ from app.services.gold_rate_service import get_latest_rate
 from app.services.item_service import ValidationError, create_item, search_items
 from app.services.pricing_service import calculate_item_price
 from app.printing.tag_printer import TagData, generate_tag_sheet_pdf
+from app.utils.qt_helpers import combo_enum_data
 
 
 class InventoryScreen(QWidget):
@@ -112,7 +113,7 @@ class InventoryScreen(QWidget):
 
     def _update_price_preview(self) -> None:
         try:
-            purity: Purity = self.purity_combo.currentData()
+            purity: Purity = combo_enum_data(self.purity_combo, Purity)
             net_weight = Decimal(self.net_weight_input.text() or "0")
             making_value = Decimal(self.making_charge_value_input.text() or "0")
             stone_value = Decimal(self.stone_value_input.text() or "0")
@@ -127,7 +128,7 @@ class InventoryScreen(QWidget):
 
         fake_item = Item(
             net_weight_g=net_weight,
-            making_charge_type=self.making_charge_type_combo.currentData(),
+            making_charge_type=combo_enum_data(self.making_charge_type_combo, MakingChargeType),
             making_charge_value=making_value,
             stone_value_total=stone_value,
         )
@@ -153,10 +154,10 @@ class InventoryScreen(QWidget):
             item_code = create_item(
                 name=self.name_input.text(),
                 category_id=self.category_combo.currentData(),
-                purity=self.purity_combo.currentData(),
+                purity=combo_enum_data(self.purity_combo, Purity),
                 gross_weight_g=gross_weight,
                 net_weight_g=net_weight,
-                making_charge_type=self.making_charge_type_combo.currentData(),
+                making_charge_type=combo_enum_data(self.making_charge_type_combo, MakingChargeType),
                 making_charge_value=making_value,
                 stone_value_total=stone_value,
                 hallmark_certificate_no=self.hallmark_input.text() or None,
@@ -216,7 +217,7 @@ class InventoryScreen(QWidget):
 
     def _reload_list(self) -> None:
         query = self.search_input.text()
-        status = self.status_filter_combo.currentData()
+        status = combo_enum_data(self.status_filter_combo, ItemStatus)
         rows = search_items(query=query, status=status)
 
         self.item_table.setRowCount(len(rows))

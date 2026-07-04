@@ -78,6 +78,7 @@ def search_invoices(
 
 @dataclass(frozen=True)
 class InvoiceLineDetail:
+    id: int
     item_code: str
     item_name: str
     net_weight_g: Decimal
@@ -125,6 +126,7 @@ def get_invoice_detail(invoice_id: int) -> InvoiceDetail | None:
 
         lines = [
             InvoiceLineDetail(
+                id=line.id,
                 item_code=line.item.item_code,
                 item_name=line.item.name,
                 net_weight_g=Decimal(line.net_weight_g),

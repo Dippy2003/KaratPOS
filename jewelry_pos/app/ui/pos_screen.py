@@ -39,6 +39,7 @@ from app.services.settings_service import get_setting
 from app.printing.receipt_pdf import ReceiptData, ReceiptLine, ReceiptPaymentLine, generate_receipt_pdf
 from app.ui.old_gold_dialog import OldGoldDialog
 from app.ui.webcam_scan_dialog import WebcamScanDialog
+from app.utils.qt_helpers import combo_enum_data
 
 
 class POSScreen(QWidget):
@@ -328,7 +329,7 @@ class POSScreen(QWidget):
         discount = Decimal(str(self.discount_input.value()))
         tax_percent = Decimal(str(self.tax_input.value()))
         payments = [
-            PaymentInput(method=method_combo.currentData(), amount=Decimal(str(amount.value())))
+            PaymentInput(method=combo_enum_data(method_combo, PaymentMethod), amount=Decimal(str(amount.value())))
             for method_combo, amount in self.payment_rows
             if amount.value() > 0
         ]
