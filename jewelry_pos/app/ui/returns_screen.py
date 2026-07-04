@@ -165,3 +165,39 @@ class ReturnsScreen(QWidget):
             f"{line.item_name} ({line.item_code}) - Line total: Rs. {line.line_total:,.2f}"
         )
         self.refund_amount_input.setValue(float(line.line_total))
+
+    def _handle_process_return(self) -> None:
+        line = self._selected_line()
+        if line is None:
+            QMessageBox.warning(self, "No Line Selected", "Select a line item to return first.")
+            return
+        if line.is_returned:
+            QMessageBox.warning(self, "Already Returned", "This item has already been returned.")
+            return
+
+        reason = self.reason_input.toPlainText().strip()
+        if not reason:
+            QMessageBox.warning(self, "Reason Required", "Please describe the reason for the return.")
+            return
+
+        try:
+            result = process_return(
+                invoice_item_id=line.id,
+                reason=reason,
+                refund_method=self.refund_method_combo.currentData(),
+                refund_amount=Decimal(str(self.refund_amount_input.value())),
+                restocked=self.restock_checkbox.isChecked(),
+                processed_by_user_id=self.current_user_id,
+            )
+        except ReturnError as exc:
+            QMessageBox.warning(self, "Cannot Process Return", str(exc))
+            return
+
+        QMessageBox.information(
+            self, "Return Processed",
+            f"Return processed. Invoice status: {result.invoice_status.value}. "
+            f"Item status: {result.item_status.value}.",
+        )
+
+        self.reason_input.clear()
+        self._handle_find_invoice()
