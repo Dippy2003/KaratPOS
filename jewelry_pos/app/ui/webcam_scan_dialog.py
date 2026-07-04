@@ -12,3 +12,31 @@ from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import QDialog, QLabel, QMessageBox, QPushButton, QVBoxLayout
 
 from app.scanning.webcam_scanner import WebcamScanner
+
+
+class WebcamScanDialog(QDialog):
+    code_scanned = Signal(str)
+
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        self.setWindowTitle("Scan Item QR Code")
+        self.resize(640, 520)
+        self.scanner = WebcamScanner()
+        self._last_scanned_code: str | None = None
+        self._build_ui()
+        self._start_camera()
+
+    def _build_ui(self) -> None:
+        layout = QVBoxLayout(self)
+
+        self.video_label = QLabel("Opening camera...")
+        self.video_label.setFixedSize(600, 420)
+        self.video_label.setStyleSheet("background-color: black; color: white;")
+        layout.addWidget(self.video_label)
+
+        self.status_label = QLabel("Point the camera at an item's QR tag.")
+        layout.addWidget(self.status_label)
+
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(self.accept)
+        layout.addWidget(close_button)
