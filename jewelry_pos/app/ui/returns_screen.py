@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
 from app.database.models import PaymentMethod
 from app.services.returns_service import ReturnError, process_return
 from app.services.transaction_service import get_invoice_detail, search_invoices
+from app.utils.qt_helpers import combo_enum_data
 
 
 class ReturnsScreen(QWidget):
@@ -184,7 +185,7 @@ class ReturnsScreen(QWidget):
             result = process_return(
                 invoice_item_id=line.id,
                 reason=reason,
-                refund_method=self.refund_method_combo.currentData(),
+                refund_method=combo_enum_data(self.refund_method_combo, PaymentMethod),
                 refund_amount=Decimal(str(self.refund_amount_input.value())),
                 restocked=self.restock_checkbox.isChecked(),
                 processed_by_user_id=self.current_user_id,
