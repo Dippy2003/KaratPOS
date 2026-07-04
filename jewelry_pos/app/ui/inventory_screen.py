@@ -128,7 +128,7 @@ class InventoryScreen(QWidget):
 
         fake_item = Item(
             net_weight_g=net_weight,
-            making_charge_type=self.making_charge_type_combo.currentData(),
+            making_charge_type=combo_enum_data(self.making_charge_type_combo, MakingChargeType),
             making_charge_value=making_value,
             stone_value_total=stone_value,
         )
