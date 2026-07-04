@@ -60,3 +60,20 @@ class ReturnsScreen(QWidget):
         splitter.addWidget(self._build_return_form())
         splitter.setSizes([700, 450])
         layout.addWidget(splitter, stretch=1)
+
+    def _build_lines_panel(self) -> QWidget:
+        panel = QWidget()
+        layout = QVBoxLayout(panel)
+
+        self.invoice_summary_label = QLabel("Search for an invoice to begin.")
+        layout.addWidget(self.invoice_summary_label)
+
+        self.lines_table = QTableWidget(0, 5)
+        self.lines_table.setHorizontalHeaderLabels(["Item", "Code", "Line Total", "Returned?", ""])
+        self.lines_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.lines_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.lines_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.lines_table.itemSelectionChanged.connect(self._on_line_selected)
+        layout.addWidget(self.lines_table)
+
+        return panel
