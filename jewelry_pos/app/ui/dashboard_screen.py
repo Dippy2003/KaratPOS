@@ -33,6 +33,11 @@ class DashboardScreen(QWidget):
         cards_row.addWidget(self.items_card)
         layout.addLayout(cards_row)
 
+        self.low_stock_label = QLabel("")
+        self.low_stock_label.setStyleSheet("color: #b8860b; font-weight: bold; padding-top: 8px;")
+        self.low_stock_label.setWordWrap(True)
+        layout.addWidget(self.low_stock_label)
+
         layout.addStretch()
 
     def _build_stat_card(self, title: str, initial_value: str) -> QFrame:
