@@ -47,6 +47,7 @@ NAV_ITEMS: list[tuple[str, tuple[UserRole, ...]]] = [
     ("Transaction History", (UserRole.ADMIN, UserRole.CASHIER)),
     ("Returns & Exchanges", (UserRole.ADMIN, UserRole.CASHIER)),
     ("Repairs", (UserRole.ADMIN, UserRole.SALES)),
+    ("Advance Orders", (UserRole.ADMIN, UserRole.CASHIER)),
     ("Reports", (UserRole.ADMIN,)),
     ("Audit Log", (UserRole.ADMIN,)),
     ("Settings", (UserRole.ADMIN,)),
