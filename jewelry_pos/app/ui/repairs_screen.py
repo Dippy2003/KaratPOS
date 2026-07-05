@@ -81,3 +81,28 @@ class RepairsScreen(QWidget):
         form.addRow(print_ticket_button)
 
         return box
+
+    def _build_list_panel(self) -> QWidget:
+        panel = QWidget()
+        layout = QVBoxLayout(panel)
+
+        self.repairs_table = QTableWidget(0, 6)
+        self.repairs_table.setHorizontalHeaderLabels(
+            ["Customer", "Item", "Received", "Promised", "Status", "Est. Cost"]
+        )
+        self.repairs_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.repairs_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.repairs_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        layout.addWidget(self.repairs_table)
+
+        status_row = QFormLayout()
+        self.status_combo = QComboBox()
+        for status in RepairStatus:
+            self.status_combo.addItem(status.value, status)
+        update_button = QPushButton("Update Selected Repair's Status")
+        update_button.clicked.connect(self._handle_update_status)
+        status_row.addRow("New status:", self.status_combo)
+        status_row.addRow(update_button)
+        layout.addLayout(status_row)
+
+        return panel
