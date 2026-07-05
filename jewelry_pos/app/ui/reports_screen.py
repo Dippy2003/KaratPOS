@@ -37,3 +37,26 @@ from app.services.report_service import (
     get_slow_moving_stock,
     get_stock_valuation_report,
 )
+
+
+class ReportsScreen(QWidget):
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._current_headers: list[str] = []
+        self._current_rows: list[list[str]] = []
+        self._current_report_name = "report"
+        self._build_ui()
+
+    def _build_ui(self) -> None:
+        layout = QVBoxLayout(self)
+
+        title = QLabel("Reports & Analytics")
+        title.setStyleSheet("font-size: 22px; font-weight: bold;")
+        layout.addWidget(title)
+
+        self.tabs = QTabWidget()
+        self.tabs.addTab(self._build_sales_tab(), "Sales")
+        self.tabs.addTab(self._build_stock_tab(), "Stock")
+        self.tabs.addTab(self._build_other_tab(), "Old Gold / Returns")
+        self.tabs.addTab(self._build_forecast_tab(), "Forecast")
+        layout.addWidget(self.tabs, stretch=1)
