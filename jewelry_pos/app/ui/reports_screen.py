@@ -250,3 +250,60 @@ class ReportsScreen(QWidget):
         rows = [[r.item_code, r.name, r.category_name, str(r.days_in_stock)] for r in rows_data]
         self._set_table_data(self.stock_table, headers, rows)
         self._current_report_name = "slow_moving_stock_report"
+
+    def _handle_show_old_gold_report(self) -> None:
+        start = self.other_start_date.date().toPython()
+        end = self.other_end_date.date().toPython()
+        rows_data = get_old_gold_report(start, end)
+        headers = ["Date", "Description", "Weight (g)", "Credit Value"]
+        rows = [
+            [r.receipt_date.strftime("%d/%m/%Y"), r.description, str(r.gross_weight_g), f"{r.credit_value:,.2f}"]
+            for r in rows_data
+        ]
+        self._set_table_data(self.other_table, headers, rows)
+        self._current_report_name = "old_gold_report"
+
+    def _handle_show_returns_report(self) -> None:
+        start = self.other_start_date.date().toPython()
+        end = self.other_end_date.date().toPython()
+        rows_data = get_returns_report(start, end)
+        headers = ["Date", "Invoice No", "Reason", "Refund Amount"]
+        rows = [
+            [r.return_date.strftime("%d/%m/%Y"), r.invoice_no, r.reason, f"{r.refund_amount:,.2f}"]
+            for r in rows_data
+        ]
+        self._set_table_data(self.other_table, headers, rows)
+        self._current_report_name = "returns_report"
+
+    def _handle_show_forecast(self) -> None:
+        result = get_sales_forecast()
+
+        self.forecast_figure.clear()
+        ax = self.forecast_figure.add_subplot(111)
+
+        if result.historical:
+            hist_dates, hist_values = zip(*result.historical)
+            ax.plot(hist_dates, [float(v) for v in hist_values], label="Historical", color="#1976d2")
+        if result.forecast:
+            fc_dates, fc_values = zip(*result.forecast)
+            ax.plot(fc_dates, [float(v) for v in fc_values], label="Forecast", color="#e65100", linestyle="--")
+
+        ax.set_title("Sales Forecast (next 30 days)")
+        ax.set_ylabel("Rs.")
+        ax.legend()
+        self.forecast_figure.autofmt_xdate()
+        self.forecast_canvas.draw()
+
+    def _handle_export_csv(self) -> None:
+        if not self._current_rows:
+            QMessageBox.information(self, "No Data", "Generate a report first.")
+            return
+        path = export_rows_to_csv(self._current_headers, self._current_rows, self._current_report_name)
+        QMessageBox.information(self, "Exported", f"CSV saved to:\n{path}")
+
+    def _handle_export_pdf(self) -> None:
+        if not self._current_rows:
+            QMessageBox.information(self, "No Data", "Generate a report first.")
+            return
+        path = export_rows_to_pdf(self._current_report_name.replace("_", " ").title(), self._current_headers, self._current_rows, self._current_report_name)
+        QMessageBox.information(self, "Exported", f"PDF saved to:\n{path}")
