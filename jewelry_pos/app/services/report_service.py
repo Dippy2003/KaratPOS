@@ -131,3 +131,45 @@ def get_date_range_sales_report(start_date: date, end_date: date) -> DateRangeSa
             invoice_count=len(invoices),
             daily_totals=daily_totals,
         )
+
+
+@dataclass(frozen=True)
+class StockValuationReport:
+    valuation_date: date
+    total_items: int
+    total_value: Decimal
+    value_by_category: dict[str, Decimal]
+
+
+def get_stock_valuation_report() -> StockValuationReport:
+    """Value of all AVAILABLE inventory at TODAY's gold rate -- recomputes as rates change."""
+    from app.services.gold_rate_service import get_latest_rate
+    from app.services.pricing_service import calculate_item_price
+
+    with get_session() as session:
+        items = session.scalars(
+            select(Item).where(Item.status == ItemStatus.AVAILABLE, Item.is_deleted.is_(False))
+        ).all()
+
+        total_value = Decimal("0")
+        value_by_category: dict[str, Decimal] = defaultdict(lambda: Decimal("0"))
+        rate_cache: dict = {}
+
+        for item in items:
+            if item.purity not in rate_cache:
+                rate_row = get_latest_rate(item.purity)
+                rate_cache[item.purity] = rate_row.rate_per_gram if rate_row else None
+            rate = rate_cache[item.purity]
+            if rate is None:
+                continue  # no rate entered yet for this purity -- skip from valuation
+
+            breakdown = calculate_item_price(item, rate)
+            total_value += breakdown.subtotal
+            value_by_category[item.category.name] += breakdown.subtotal
+
+        return StockValuationReport(
+            valuation_date=date.today(),
+            total_items=len(items),
+            total_value=total_value,
+            value_by_category=dict(value_by_category),
+        )
