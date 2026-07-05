@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 from app.database.models import UserRole
 from app.services.auth_service import AuthResult, log_logout
 from app.ui.advance_orders_screen import AdvanceOrdersScreen
+from app.ui.audit_log_screen import AuditLogScreen
 from app.ui.customers_screen import CustomersScreen
 from app.ui.dashboard_screen import DashboardScreen
 from app.ui.gold_rate_screen import GoldRateScreen
@@ -31,7 +32,9 @@ from app.ui.inventory_screen import InventoryScreen
 from app.ui.pos_screen import POSScreen
 from app.ui.rate_header_widget import RateHeaderWidget
 from app.ui.repairs_screen import RepairsScreen
+from app.ui.reports_screen import ReportsScreen
 from app.ui.returns_screen import ReturnsScreen
+from app.ui.stock_take_screen import StockTakeScreen
 from app.ui.suppliers_screen import SuppliersScreen
 from app.ui.transaction_history_screen import TransactionHistoryScreen
 from app.utils.config import APP_NAME
