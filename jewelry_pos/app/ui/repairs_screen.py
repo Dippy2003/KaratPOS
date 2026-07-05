@@ -20,7 +20,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import QDate
+from PySide6.QtCore import QDate, Qt
+from PySide6.QtGui import QColor
 
 from app.database.models import RepairStatus
 from app.services.customer_service import find_by_phone
@@ -106,3 +107,100 @@ class RepairsScreen(QWidget):
         layout.addLayout(status_row)
 
         return panel
+
+    def _handle_create_repair(self) -> None:
+        phone = self.customer_phone_input.text().strip()
+        customer = find_by_phone(phone) if phone else None
+        if customer is None:
+            QMessageBox.warning(self, "Customer Not Found", "Enter a valid, existing customer phone number.")
+            return
+
+        try:
+            cost = Decimal(self.estimated_cost_input.text() or "0")
+        except (InvalidOperation, ValueError):
+            QMessageBox.warning(self, "Invalid Input", "Enter a valid estimated cost.")
+            return
+
+        promised = self.promised_date_input.date().toPython()
+
+        try:
+            repair = create_repair(
+                customer_id=customer.id,
+                item_description=self.item_description_input.text(),
+                issue=self.issue_input.text(),
+                promised_date=promised,
+                estimated_cost=cost,
+                received_by_user_id=self.current_user_id,
+            )
+        except ValidationError as exc:
+            QMessageBox.warning(self, "Validation Error", str(exc))
+            return
+
+        self._last_created_repair_id = repair.id
+        QMessageBox.information(self, "Repair Logged", f"Repair #{repair.id} logged for {customer.name}.")
+        self.item_description_input.clear()
+        self.issue_input.clear()
+        self._reload_list()
+
+    def _reload_list(self) -> None:
+        repairs = get_all_repairs()
+        today = date.today()
+
+        self.repairs_table.setRowCount(len(repairs))
+        for i, r in enumerate(repairs):
+            self.repairs_table.setItem(i, 0, QTableWidgetItem(r.customer_name))
+            self.repairs_table.setItem(i, 1, QTableWidgetItem(r.item_description))
+            self.repairs_table.setItem(i, 2, QTableWidgetItem(r.received_date.strftime("%d/%m/%Y")))
+            promised_text = r.promised_date.strftime("%d/%m/%Y") if r.promised_date else "-"
+            self.repairs_table.setItem(i, 3, QTableWidgetItem(promised_text))
+            self.repairs_table.setItem(i, 4, QTableWidgetItem(r.status.value))
+            self.repairs_table.setItem(i, 5, QTableWidgetItem(f"{r.estimated_cost:,.2f}"))
+            self.repairs_table.item(i, 0).setData(Qt.ItemDataRole.UserRole, r.id)
+
+            is_overdue = r.promised_date and r.promised_date < today and r.status != RepairStatus.DELIVERED
+            if is_overdue:
+                # Explicit dark foreground: this highlight is always a light
+                # pink background regardless of the app's theme, so text must
+                # not inherit a (possibly white, under dark mode) palette color.
+                for col in range(6):
+                    cell = self.repairs_table.item(i, col)
+                    cell.setBackground(QColor("#ffcdd2"))
+                    cell.setForeground(QColor("#1a1a1a"))
+
+    def _handle_update_status(self) -> None:
+        selected_rows = self.repairs_table.selectedIndexes()
+        if not selected_rows:
+            QMessageBox.warning(self, "No Selection", "Select a repair row first.")
+            return
+        row = selected_rows[0].row()
+        repair_id = self.repairs_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+        new_status = self.status_combo.currentData()
+
+        try:
+            update_repair_status(repair_id, new_status, updated_by_user_id=self.current_user_id)
+        except ValidationError as exc:
+            QMessageBox.warning(self, "Error", str(exc))
+            return
+        self._reload_list()
+
+    def _handle_print_last_ticket(self) -> None:
+        if self._last_created_repair_id is None:
+            QMessageBox.information(self, "No Repair", "Log a repair first.")
+            return
+
+        repairs = get_all_repairs()
+        repair = next((r for r in repairs if r.id == self._last_created_repair_id), None)
+        if repair is None:
+            return
+
+        data = RepairTicketData(
+            repair_id=repair.id,
+            customer_name=repair.customer_name,
+            item_description=repair.item_description,
+            issue=repair.issue,
+            received_date=repair.received_date,
+            promised_date=repair.promised_date,
+            estimated_cost=repair.estimated_cost,
+        )
+        pdf_path = generate_repair_ticket_pdf(data)
+        QMessageBox.information(self, "Ticket Generated", f"Repair ticket saved to:\n{pdf_path}")
