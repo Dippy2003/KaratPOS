@@ -30,3 +30,57 @@ from app.services.advance_order_service import (
     record_installment_payment,
 )
 from app.services.customer_service import find_by_phone
+
+
+class AdvanceOrdersScreen(QWidget):
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._build_ui()
+        self._reload_list()
+
+    def _build_ui(self) -> None:
+        layout = QVBoxLayout(self)
+
+        title = QLabel("Advance Orders")
+        title.setStyleSheet("font-size: 22px; font-weight: bold;")
+        layout.addWidget(title)
+
+        splitter = QSplitter()
+        splitter.addWidget(self._build_create_form())
+        splitter.addWidget(self._build_list_panel())
+        splitter.setSizes([420, 900])
+        layout.addWidget(splitter, stretch=1)
+
+    def _build_create_form(self) -> QWidget:
+        box = QGroupBox("New Advance Order")
+        form = QFormLayout(box)
+
+        self.customer_phone_input = QLineEdit()
+        form.addRow("Customer phone:", self.customer_phone_input)
+
+        self.description_input = QLineEdit()
+        form.addRow("Description:", self.description_input)
+
+        self.estimated_total_input = QLineEdit()
+        form.addRow("Estimated total (Rs.):", self.estimated_total_input)
+
+        self.initial_advance_input = QLineEdit()
+        self.initial_advance_input.setText("0")
+        form.addRow("Initial advance (Rs.):", self.initial_advance_input)
+
+        self.due_date_input = QDateEdit()
+        self.due_date_input.setCalendarPopup(True)
+        self.due_date_input.setDate(QDate.currentDate().addDays(30))
+        form.addRow("Due date:", self.due_date_input)
+
+        self.payment_method_combo = QComboBox()
+        for method in PaymentMethod:
+            if method != PaymentMethod.OLD_GOLD:
+                self.payment_method_combo.addItem(method.value, method)
+        form.addRow("Payment method:", self.payment_method_combo)
+
+        create_button = QPushButton("Create Order")
+        create_button.clicked.connect(self._handle_create_order)
+        form.addRow(create_button)
+
+        return box
