@@ -182,3 +182,52 @@ class ReportsScreen(QWidget):
         layout.addWidget(self.forecast_canvas, stretch=1)
 
         return tab
+
+    def _set_table_data(self, table: QTableWidget, headers: list[str], rows: list[list[str]]) -> None:
+        table.setColumnCount(len(headers))
+        table.setHorizontalHeaderLabels(headers)
+        table.setRowCount(len(rows))
+        for i, row in enumerate(rows):
+            for j, value in enumerate(row):
+                table.setItem(i, j, QTableWidgetItem(str(value)))
+
+        self._current_headers = headers
+        self._current_rows = rows
+
+    def _handle_show_daily_report(self) -> None:
+        report = get_daily_sales_report(date.today())
+        self.sales_summary_label.setText(
+            f"Total sales: Rs. {report.total_sales:,.2f}  |  Profit: Rs. {report.total_profit:,.2f}  |  "
+            f"Invoices: {report.invoice_count}"
+        )
+        headers = ["Item", "Qty Sold"]
+        rows = [[name, str(qty)] for name, qty in report.best_selling_items]
+        self._set_table_data(self.sales_table, headers, rows)
+        self._current_report_name = "daily_sales_report"
+
+    def _handle_show_range_report(self) -> None:
+        start = self.sales_start_date.date().toPython()
+        end = self.sales_end_date.date().toPython()
+        if start > end:
+            QMessageBox.warning(self, "Invalid Range", "Start date must be before end date.")
+            return
+
+        report = get_date_range_sales_report(start, end)
+        self.sales_summary_label.setText(
+            f"Total sales ({start} to {end}): Rs. {report.total_sales:,.2f}  |  "
+            f"Profit: Rs. {report.total_profit:,.2f}  |  Invoices: {report.invoice_count}"
+        )
+        headers = ["Date", "Total Sales"]
+        rows = [[d.strftime("%d/%m/%Y"), f"{total:,.2f}"] for d, total in report.daily_totals]
+        self._set_table_data(self.sales_table, headers, rows)
+        self._current_report_name = "date_range_sales_report"
+
+    def _handle_show_profit_report(self) -> None:
+        start = self.sales_start_date.date().toPython()
+        end = self.sales_end_date.date().toPython()
+        rows_data = get_profit_by_category(start, end)
+        self.sales_summary_label.setText(f"Profit by category ({start} to {end})")
+        headers = ["Category", "Items Sold", "Profit"]
+        rows = [[r.category_name, str(r.items_sold), f"{r.total_profit:,.2f}"] for r in rows_data]
+        self._set_table_data(self.sales_table, headers, rows)
+        self._current_report_name = "profit_by_category_report"
