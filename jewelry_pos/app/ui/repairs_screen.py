@@ -27,6 +27,7 @@ from app.database.models import RepairStatus
 from app.services.customer_service import find_by_phone
 from app.services.repair_service import ValidationError, create_repair, get_all_repairs, update_repair_status
 from app.printing.repair_ticket import RepairTicketData, generate_repair_ticket_pdf
+from app.utils.qt_helpers import combo_enum_data
 
 
 class RepairsScreen(QWidget):
@@ -174,7 +175,7 @@ class RepairsScreen(QWidget):
             return
         row = selected_rows[0].row()
         repair_id = self.repairs_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
-        new_status = self.status_combo.currentData()
+        new_status = combo_enum_data(self.status_combo, RepairStatus)
 
         try:
             update_repair_status(repair_id, new_status, updated_by_user_id=self.current_user_id)

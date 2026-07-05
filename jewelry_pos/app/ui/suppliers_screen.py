@@ -28,6 +28,7 @@ from PySide6.QtWidgets import (
 from app.database.models import MakingChargeType, Purity
 from app.services.category_service import get_all_categories
 from app.services.purchase_service import PurchaseLineInput, ValidationError, create_purchase
+from app.utils.qt_helpers import combo_enum_data
 from app.services.supplier_service import create_supplier, get_all_suppliers
 from app.printing.tag_printer import TagData, generate_tag_sheet_pdf
 
@@ -157,10 +158,10 @@ class SuppliersScreen(QWidget):
         line = PurchaseLineInput(
             name=self.item_name_input.text(),
             category_id=self.category_combo.currentData(),
-            purity=self.purity_combo.currentData(),
+            purity=combo_enum_data(self.purity_combo, Purity),
             gross_weight_g=gross_weight,
             net_weight_g=net_weight,
-            making_charge_type=self.making_charge_type_combo.currentData(),
+            making_charge_type=combo_enum_data(self.making_charge_type_combo, MakingChargeType),
             making_charge_value=making_value,
             stone_value_total=stone_value,
             cost_price=cost_price,
