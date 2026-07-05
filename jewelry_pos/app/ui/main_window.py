@@ -162,6 +162,12 @@ class MainWindow(QMainWindow):
             return RepairsScreen(self.auth_result.user_id)
         if label == "Advance Orders":
             return AdvanceOrdersScreen()
+        if label == "Stock Take":
+            return StockTakeScreen()
+        if label == "Reports":
+            return ReportsScreen()
+        if label == "Audit Log":
+            return AuditLogScreen()
         return self._placeholder_page(label)
 
     def _handle_sale_completed(self) -> None:
