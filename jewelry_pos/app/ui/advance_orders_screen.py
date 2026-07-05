@@ -112,3 +112,72 @@ class AdvanceOrdersScreen(QWidget):
         layout.addLayout(installment_form)
 
         return panel
+
+    def _handle_create_order(self) -> None:
+        phone = self.customer_phone_input.text().strip()
+        customer = find_by_phone(phone) if phone else None
+        if customer is None:
+            QMessageBox.warning(self, "Customer Not Found", "Enter a valid, existing customer phone number.")
+            return
+
+        try:
+            estimated_total = Decimal(self.estimated_total_input.text() or "0")
+            initial_advance = Decimal(self.initial_advance_input.text() or "0")
+        except (InvalidOperation, ValueError):
+            QMessageBox.warning(self, "Invalid Input", "Enter valid numeric amounts.")
+            return
+
+        try:
+            order = create_advance_order(
+                customer_id=customer.id,
+                description=self.description_input.text(),
+                estimated_total=estimated_total,
+                initial_advance=initial_advance,
+                due_date=self.due_date_input.date().toPython(),
+                payment_method=self.payment_method_combo.currentData(),
+            )
+        except ValidationError as exc:
+            QMessageBox.warning(self, "Validation Error", str(exc))
+            return
+
+        QMessageBox.information(self, "Order Created", f"Advance order #{order.id} created. Balance: Rs. {order.balance:,.2f}")
+        self.description_input.clear()
+        self.estimated_total_input.clear()
+        self.initial_advance_input.setText("0")
+        self._reload_list()
+
+    def _reload_list(self) -> None:
+        orders = get_all_advance_orders()
+        self.orders_table.setRowCount(len(orders))
+        for i, o in enumerate(orders):
+            self.orders_table.setItem(i, 0, QTableWidgetItem(o.customer_name))
+            self.orders_table.setItem(i, 1, QTableWidgetItem(o.description))
+            self.orders_table.setItem(i, 2, QTableWidgetItem(f"{o.estimated_total:,.2f}"))
+            self.orders_table.setItem(i, 3, QTableWidgetItem(f"{o.advance_paid:,.2f}"))
+            self.orders_table.setItem(i, 4, QTableWidgetItem(f"{o.balance:,.2f}"))
+            self.orders_table.setItem(i, 5, QTableWidgetItem(o.status.value))
+            self.orders_table.item(i, 0).setData(Qt.ItemDataRole.UserRole, o.id)
+
+    def _handle_record_installment(self) -> None:
+        selected = self.orders_table.selectedIndexes()
+        if not selected:
+            QMessageBox.warning(self, "No Selection", "Select an advance order row first.")
+            return
+        row = selected[0].row()
+        order_id = self.orders_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+
+        try:
+            amount = Decimal(self.installment_amount_input.text() or "0")
+        except (InvalidOperation, ValueError):
+            QMessageBox.warning(self, "Invalid Input", "Enter a valid payment amount.")
+            return
+
+        try:
+            order = record_installment_payment(order_id, amount, self.installment_method_combo.currentData())
+        except ValidationError as exc:
+            QMessageBox.warning(self, "Error", str(exc))
+            return
+
+        QMessageBox.information(self, "Payment Recorded", f"New balance: Rs. {order.balance:,.2f} ({order.status.value})")
+        self.installment_amount_input.clear()
+        self._reload_list()
