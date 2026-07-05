@@ -79,3 +79,41 @@ def create_repair(
             )
         )
         return _to_row(repair)
+
+
+def update_repair_status(repair_id: int, status: RepairStatus, final_cost: Decimal | None = None, updated_by_user_id: int | None = None) -> None:
+    with get_session() as session:
+        repair = session.get(Repair, repair_id)
+        if repair is None:
+            raise ValidationError("Repair not found.")
+        repair.status = status
+        if final_cost is not None:
+            repair.final_cost = final_cost
+        session.add(
+            AuditLog(
+                user_id=updated_by_user_id,
+                action=f"Repair #{repair_id} status changed to {status.value}",
+                entity_type="Repair",
+                entity_id=repair_id,
+            )
+        )
+
+
+def get_all_repairs() -> list[RepairRow]:
+    with get_session() as session:
+        rows = session.scalars(select(Repair).order_by(Repair.received_date.desc())).all()
+        return [_to_row(r) for r in rows]
+
+
+def get_overdue_repairs() -> list[RepairRow]:
+    """Repairs past their promised_date that haven't been delivered yet."""
+    today = date.today()
+    with get_session() as session:
+        rows = session.scalars(
+            select(Repair).where(
+                Repair.promised_date.is_not(None),
+                Repair.promised_date < today,
+                Repair.status != RepairStatus.DELIVERED,
+            )
+        ).all()
+        return [_to_row(r) for r in rows]
