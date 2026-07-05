@@ -231,3 +231,22 @@ class ReportsScreen(QWidget):
         rows = [[r.category_name, str(r.items_sold), f"{r.total_profit:,.2f}"] for r in rows_data]
         self._set_table_data(self.sales_table, headers, rows)
         self._current_report_name = "profit_by_category_report"
+
+    def _handle_show_valuation_report(self) -> None:
+        report = get_stock_valuation_report()
+        self.stock_summary_label.setText(
+            f"Stock valuation as of {report.valuation_date.strftime('%d/%m/%Y')}: "
+            f"{report.total_items} items, Rs. {report.total_value:,.2f}"
+        )
+        headers = ["Category", "Value"]
+        rows = [[cat, f"{value:,.2f}"] for cat, value in report.value_by_category.items()]
+        self._set_table_data(self.stock_table, headers, rows)
+        self._current_report_name = "stock_valuation_report"
+
+    def _handle_show_slow_moving_report(self) -> None:
+        rows_data = get_slow_moving_stock(min_days=90)
+        self.stock_summary_label.setText(f"{len(rows_data)} item(s) in stock 90+ days")
+        headers = ["Item Code", "Name", "Category", "Days in Stock"]
+        rows = [[r.item_code, r.name, r.category_name, str(r.days_in_stock)] for r in rows_data]
+        self._set_table_data(self.stock_table, headers, rows)
+        self._current_report_name = "slow_moving_stock_report"
