@@ -30,6 +30,7 @@ from app.services.advance_order_service import (
     record_installment_payment,
 )
 from app.services.customer_service import find_by_phone
+from app.utils.qt_helpers import combo_enum_data
 
 
 class AdvanceOrdersScreen(QWidget):
@@ -134,7 +135,7 @@ class AdvanceOrdersScreen(QWidget):
                 estimated_total=estimated_total,
                 initial_advance=initial_advance,
                 due_date=self.due_date_input.date().toPython(),
-                payment_method=self.payment_method_combo.currentData(),
+                payment_method=combo_enum_data(self.payment_method_combo, PaymentMethod),
             )
         except ValidationError as exc:
             QMessageBox.warning(self, "Validation Error", str(exc))
@@ -173,7 +174,7 @@ class AdvanceOrdersScreen(QWidget):
             return
 
         try:
-            order = record_installment_payment(order_id, amount, self.installment_method_combo.currentData())
+            order = record_installment_payment(order_id, amount, combo_enum_data(self.installment_method_combo, PaymentMethod))
         except ValidationError as exc:
             QMessageBox.warning(self, "Error", str(exc))
             return
