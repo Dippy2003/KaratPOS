@@ -113,3 +113,27 @@ class SuppliersScreen(QWidget):
         form.addRow(record_button)
 
         return box
+
+    def _handle_add_supplier(self) -> None:
+        name = self.supplier_name_input.text()
+        phone = self.supplier_phone_input.text() or None
+        try:
+            create_supplier(name, phone=phone)
+        except ValidationError as exc:
+            QMessageBox.warning(self, "Validation Error", str(exc))
+            return
+        self.supplier_name_input.clear()
+        self.supplier_phone_input.clear()
+        self._reload_suppliers()
+
+    def _reload_suppliers(self) -> None:
+        suppliers = get_all_suppliers()
+
+        self.supplier_list_table.setRowCount(len(suppliers))
+        for i, s in enumerate(suppliers):
+            self.supplier_list_table.setItem(i, 0, QTableWidgetItem(s.name))
+            self.supplier_list_table.setItem(i, 1, QTableWidgetItem(s.phone or ""))
+
+        self.purchase_supplier_combo.clear()
+        for s in suppliers:
+            self.purchase_supplier_combo.addItem(s.name, s.id)
