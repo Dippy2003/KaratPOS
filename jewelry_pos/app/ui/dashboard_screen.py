@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
+from app.services.category_service import get_low_stock_categories
 from app.services.dashboard_service import get_today_stats
 
 
@@ -31,6 +32,11 @@ class DashboardScreen(QWidget):
         cards_row.addWidget(self.invoice_card)
         cards_row.addWidget(self.items_card)
         layout.addLayout(cards_row)
+
+        self.low_stock_label = QLabel("")
+        self.low_stock_label.setStyleSheet("color: #b8860b; font-weight: bold; padding-top: 8px;")
+        self.low_stock_label.setWordWrap(True)
+        layout.addWidget(self.low_stock_label)
 
         layout.addStretch()
 
@@ -66,3 +72,10 @@ class DashboardScreen(QWidget):
         self.sales_card.value_label.setText(f"Rs. {stats.total_sales:,.2f}")
         self.invoice_card.value_label.setText(str(stats.invoice_count))
         self.items_card.value_label.setText(str(stats.items_sold))
+
+        low_stock = get_low_stock_categories()
+        if low_stock:
+            parts = [f"{name} ({count}/{threshold})" for name, count, threshold in low_stock]
+            self.low_stock_label.setText("⚠ Low stock: " + ", ".join(parts))
+        else:
+            self.low_stock_label.setText("")

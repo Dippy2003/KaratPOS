@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 from app.database.models import UserRole
 from app.services.auth_service import AuthResult, log_logout
 from app.ui.advance_orders_screen import AdvanceOrdersScreen
+from app.ui.audit_log_screen import AuditLogScreen
 from app.ui.customers_screen import CustomersScreen
 from app.ui.dashboard_screen import DashboardScreen
 from app.ui.gold_rate_screen import GoldRateScreen
@@ -31,7 +32,9 @@ from app.ui.inventory_screen import InventoryScreen
 from app.ui.pos_screen import POSScreen
 from app.ui.rate_header_widget import RateHeaderWidget
 from app.ui.repairs_screen import RepairsScreen
+from app.ui.reports_screen import ReportsScreen
 from app.ui.returns_screen import ReturnsScreen
+from app.ui.stock_take_screen import StockTakeScreen
 from app.ui.suppliers_screen import SuppliersScreen
 from app.ui.transaction_history_screen import TransactionHistoryScreen
 from app.utils.config import APP_NAME
@@ -48,6 +51,7 @@ NAV_ITEMS: list[tuple[str, tuple[UserRole, ...]]] = [
     ("Returns & Exchanges", (UserRole.ADMIN, UserRole.CASHIER)),
     ("Repairs", (UserRole.ADMIN, UserRole.SALES)),
     ("Advance Orders", (UserRole.ADMIN, UserRole.CASHIER)),
+    ("Stock Take", (UserRole.ADMIN, UserRole.SALES)),
     ("Reports", (UserRole.ADMIN,)),
     ("Audit Log", (UserRole.ADMIN,)),
     ("Settings", (UserRole.ADMIN,)),
@@ -158,6 +162,12 @@ class MainWindow(QMainWindow):
             return RepairsScreen(self.auth_result.user_id)
         if label == "Advance Orders":
             return AdvanceOrdersScreen()
+        if label == "Stock Take":
+            return StockTakeScreen()
+        if label == "Reports":
+            return ReportsScreen()
+        if label == "Audit Log":
+            return AuditLogScreen()
         return self._placeholder_page(label)
 
     def _handle_sale_completed(self) -> None:
