@@ -90,3 +90,44 @@ def get_daily_sales_report(report_date: date) -> DailySalesReport:
             payment_breakdown=dict(payment_breakdown),
             sales_by_employee=dict(sales_by_employee),
         )
+
+
+@dataclass(frozen=True)
+class DateRangeSalesReport:
+    start_date: date
+    end_date: date
+    total_sales: Decimal
+    total_profit: Decimal
+    invoice_count: int
+    daily_totals: list[tuple[date, Decimal]]  # for charting
+
+
+def get_date_range_sales_report(start_date: date, end_date: date) -> DateRangeSalesReport:
+    start = datetime.combine(start_date, datetime.min.time())
+    end = datetime.combine(end_date, datetime.min.time()) + timedelta(days=1)
+
+    with get_session() as session:
+        invoices = _invoices_in_range(session, start, end)
+
+        total_sales = Decimal("0")
+        total_profit = Decimal("0")
+        daily_sales: dict[date, Decimal] = defaultdict(lambda: Decimal("0"))
+
+        for invoice in invoices:
+            invoice_day = invoice.invoice_datetime.date()
+            total_sales += Decimal(invoice.grand_total)
+            daily_sales[invoice_day] += Decimal(invoice.grand_total)
+            for line in invoice.items:
+                if not line.is_returned:
+                    total_profit += Decimal(line.line_total) - Decimal(line.item.cost_price)
+
+        daily_totals = sorted(daily_sales.items())
+
+        return DateRangeSalesReport(
+            start_date=start_date,
+            end_date=end_date,
+            total_sales=total_sales,
+            total_profit=total_profit,
+            invoice_count=len(invoices),
+            daily_totals=daily_totals,
+        )
