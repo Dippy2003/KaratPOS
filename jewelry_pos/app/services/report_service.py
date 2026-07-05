@@ -173,3 +173,63 @@ def get_stock_valuation_report() -> StockValuationReport:
             total_value=total_value,
             value_by_category=dict(value_by_category),
         )
+
+
+@dataclass(frozen=True)
+class ProfitByCategoryRow:
+    category_name: str
+    items_sold: int
+    total_profit: Decimal
+
+
+def get_profit_by_category(start_date: date, end_date: date) -> list[ProfitByCategoryRow]:
+    start = datetime.combine(start_date, datetime.min.time())
+    end = datetime.combine(end_date, datetime.min.time()) + timedelta(days=1)
+
+    with get_session() as session:
+        invoices = _invoices_in_range(session, start, end)
+
+        profit_by_cat: dict[str, Decimal] = defaultdict(lambda: Decimal("0"))
+        count_by_cat: dict[str, int] = defaultdict(int)
+
+        for invoice in invoices:
+            for line in invoice.items:
+                if line.is_returned:
+                    continue
+                cat_name = line.item.category.name
+                profit_by_cat[cat_name] += Decimal(line.line_total) - Decimal(line.item.cost_price)
+                count_by_cat[cat_name] += 1
+
+        return [
+            ProfitByCategoryRow(category_name=cat, items_sold=count_by_cat[cat], total_profit=profit)
+            for cat, profit in sorted(profit_by_cat.items(), key=lambda kv: kv[1], reverse=True)
+        ]
+
+
+@dataclass(frozen=True)
+class SlowMovingItemRow:
+    item_code: str
+    name: str
+    category_name: str
+    days_in_stock: int
+
+
+def get_slow_moving_stock(min_days: int = 90) -> list[SlowMovingItemRow]:
+    """AVAILABLE items that have sat in inventory longer than min_days."""
+    today = date.today()
+    with get_session() as session:
+        items = session.scalars(
+            select(Item).where(Item.status == ItemStatus.AVAILABLE, Item.is_deleted.is_(False))
+        ).all()
+
+        rows = []
+        for item in items:
+            days = (today - item.date_added).days
+            if days >= min_days:
+                rows.append(
+                    SlowMovingItemRow(
+                        item_code=item.item_code, name=item.name,
+                        category_name=item.category.name, days_in_stock=days,
+                    )
+                )
+        return sorted(rows, key=lambda r: r.days_in_stock, reverse=True)
