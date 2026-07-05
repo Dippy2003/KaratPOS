@@ -72,3 +72,10 @@ class DashboardScreen(QWidget):
         self.sales_card.value_label.setText(f"Rs. {stats.total_sales:,.2f}")
         self.invoice_card.value_label.setText(str(stats.invoice_count))
         self.items_card.value_label.setText(str(stats.items_sold))
+
+        low_stock = get_low_stock_categories()
+        if low_stock:
+            parts = [f"{name} ({count}/{threshold})" for name, count, threshold in low_stock]
+            self.low_stock_label.setText("⚠ Low stock: " + ", ".join(parts))
+        else:
+            self.low_stock_label.setText("")
