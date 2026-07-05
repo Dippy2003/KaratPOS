@@ -233,3 +233,57 @@ def get_slow_moving_stock(min_days: int = 90) -> list[SlowMovingItemRow]:
                     )
                 )
         return sorted(rows, key=lambda r: r.days_in_stock, reverse=True)
+
+
+@dataclass(frozen=True)
+class OldGoldReportRow:
+    receipt_date: date
+    description: str
+    gross_weight_g: Decimal
+    credit_value: Decimal
+
+
+def get_old_gold_report(start_date: date, end_date: date) -> list[OldGoldReportRow]:
+    from app.database.models import OldGoldReceipt
+
+    start = datetime.combine(start_date, datetime.min.time())
+    end = datetime.combine(end_date, datetime.min.time()) + timedelta(days=1)
+
+    with get_session() as session:
+        receipts = session.scalars(
+            select(OldGoldReceipt).where(OldGoldReceipt.created_at >= start, OldGoldReceipt.created_at < end)
+        ).all()
+        return [
+            OldGoldReportRow(
+                receipt_date=r.created_at.date(), description=r.description,
+                gross_weight_g=Decimal(r.gross_weight_g), credit_value=Decimal(r.credit_value),
+            )
+            for r in receipts
+        ]
+
+
+@dataclass(frozen=True)
+class ReturnsReportRow:
+    return_date: date
+    invoice_no: str
+    reason: str
+    refund_amount: Decimal
+
+
+def get_returns_report(start_date: date, end_date: date) -> list[ReturnsReportRow]:
+    from app.database.models import Return
+
+    start = datetime.combine(start_date, datetime.min.time())
+    end = datetime.combine(end_date, datetime.min.time()) + timedelta(days=1)
+
+    with get_session() as session:
+        returns = session.scalars(
+            select(Return).where(Return.return_date >= start, Return.return_date < end)
+        ).all()
+        return [
+            ReturnsReportRow(
+                return_date=r.return_date.date(), invoice_no=r.invoice.invoice_no,
+                reason=r.reason, refund_amount=Decimal(r.refund_amount),
+            )
+            for r in returns
+        ]
