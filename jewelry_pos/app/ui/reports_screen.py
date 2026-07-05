@@ -114,3 +114,26 @@ class ReportsScreen(QWidget):
         layout.addLayout(self._build_export_row())
 
         return tab
+
+    def _build_stock_tab(self) -> QWidget:
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+
+        controls = QHBoxLayout()
+        valuation_button = QPushButton("Stock Valuation Report")
+        valuation_button.clicked.connect(self._handle_show_valuation_report)
+        slow_button = QPushButton("Slow-Moving Stock (90+ days)")
+        slow_button.clicked.connect(self._handle_show_slow_moving_report)
+        controls.addWidget(valuation_button)
+        controls.addWidget(slow_button)
+        controls.addStretch()
+        layout.addLayout(controls)
+
+        self.stock_summary_label = QLabel("")
+        layout.addWidget(self.stock_summary_label)
+
+        self.stock_table = self._build_shared_results_table()
+        layout.addWidget(self.stock_table, stretch=1)
+        layout.addLayout(self._build_export_row())
+
+        return tab
