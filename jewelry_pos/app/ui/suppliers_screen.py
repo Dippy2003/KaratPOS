@@ -137,3 +137,61 @@ class SuppliersScreen(QWidget):
         self.purchase_supplier_combo.clear()
         for s in suppliers:
             self.purchase_supplier_combo.addItem(s.name, s.id)
+
+    def _handle_record_purchase(self) -> None:
+        supplier_id = self.purchase_supplier_combo.currentData()
+        if supplier_id is None:
+            QMessageBox.warning(self, "No Supplier", "Add a supplier first.")
+            return
+
+        try:
+            gross_weight = Decimal(self.gross_weight_input.text() or "0")
+            net_weight = Decimal(self.net_weight_input.text() or "0")
+            making_value = Decimal(self.making_charge_value_input.text() or "0")
+            stone_value = Decimal(self.stone_value_input.text() or "0")
+            cost_price = Decimal(self.cost_price_input.text() or "0")
+        except (InvalidOperation, ValueError):
+            QMessageBox.warning(self, "Invalid Input", "Please enter valid numbers for weights and charges.")
+            return
+
+        line = PurchaseLineInput(
+            name=self.item_name_input.text(),
+            category_id=self.category_combo.currentData(),
+            purity=self.purity_combo.currentData(),
+            gross_weight_g=gross_weight,
+            net_weight_g=net_weight,
+            making_charge_type=self.making_charge_type_combo.currentData(),
+            making_charge_value=making_value,
+            stone_value_total=stone_value,
+            cost_price=cost_price,
+        )
+
+        try:
+            result = create_purchase(supplier_id, [line], created_by_user_id=self.current_user_id)
+        except ValidationError as exc:
+            QMessageBox.warning(self, "Validation Error", str(exc))
+            return
+
+        offer_tags = QMessageBox.question(
+            self, "Purchase Recorded",
+            f"Purchase #{result.purchase_id} recorded. Created item(s): {', '.join(result.created_item_codes)}.\n\n"
+            "Print QR tags for the new item(s) now?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if offer_tags == QMessageBox.StandardButton.Yes:
+            tags = [
+                TagData(item_code=code, name=line.name, net_weight_g=line.net_weight_g, purity=line.purity.value)
+                for code in result.created_item_codes
+            ]
+            pdf_path = generate_tag_sheet_pdf(tags)
+            QMessageBox.information(self, "Tags Generated", f"QR tag sheet saved to:\n{pdf_path}")
+
+        self._clear_purchase_form()
+
+    def _clear_purchase_form(self) -> None:
+        self.item_name_input.clear()
+        self.gross_weight_input.clear()
+        self.net_weight_input.clear()
+        self.making_charge_value_input.clear()
+        self.stone_value_input.setText("0")
+        self.cost_price_input.clear()
