@@ -137,3 +137,48 @@ class ReportsScreen(QWidget):
         layout.addLayout(self._build_export_row())
 
         return tab
+
+    def _build_other_tab(self) -> QWidget:
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+
+        controls = QHBoxLayout()
+        self.other_start_date = QDateEdit()
+        self.other_start_date.setCalendarPopup(True)
+        self.other_start_date.setDate(QDate.currentDate().addDays(-30))
+        self.other_end_date = QDateEdit()
+        self.other_end_date.setCalendarPopup(True)
+        self.other_end_date.setDate(QDate.currentDate())
+
+        old_gold_button = QPushButton("Old Gold Purchased Report")
+        old_gold_button.clicked.connect(self._handle_show_old_gold_report)
+        returns_button = QPushButton("Returns Report")
+        returns_button.clicked.connect(self._handle_show_returns_report)
+
+        controls.addWidget(QLabel("From:"))
+        controls.addWidget(self.other_start_date)
+        controls.addWidget(QLabel("To:"))
+        controls.addWidget(self.other_end_date)
+        controls.addWidget(old_gold_button)
+        controls.addWidget(returns_button)
+        layout.addLayout(controls)
+
+        self.other_table = self._build_shared_results_table()
+        layout.addWidget(self.other_table, stretch=1)
+        layout.addLayout(self._build_export_row())
+
+        return tab
+
+    def _build_forecast_tab(self) -> QWidget:
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+
+        refresh_button = QPushButton("Refresh 30-Day Forecast")
+        refresh_button.clicked.connect(self._handle_show_forecast)
+        layout.addWidget(refresh_button)
+
+        self.forecast_figure = Figure(figsize=(8, 4))
+        self.forecast_canvas = FigureCanvas(self.forecast_figure)
+        layout.addWidget(self.forecast_canvas, stretch=1)
+
+        return tab
