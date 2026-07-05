@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
+from app.services.category_service import get_low_stock_categories
 from app.services.dashboard_service import get_today_stats
 
 
