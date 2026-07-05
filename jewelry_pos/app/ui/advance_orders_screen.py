@@ -84,3 +84,31 @@ class AdvanceOrdersScreen(QWidget):
         form.addRow(create_button)
 
         return box
+
+    def _build_list_panel(self) -> QWidget:
+        panel = QWidget()
+        layout = QVBoxLayout(panel)
+
+        self.orders_table = QTableWidget(0, 6)
+        self.orders_table.setHorizontalHeaderLabels(
+            ["Customer", "Description", "Estimated Total", "Paid", "Balance", "Status"]
+        )
+        self.orders_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.orders_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.orders_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        layout.addWidget(self.orders_table)
+
+        installment_form = QFormLayout()
+        self.installment_amount_input = QLineEdit()
+        self.installment_method_combo = QComboBox()
+        for method in PaymentMethod:
+            if method != PaymentMethod.OLD_GOLD:
+                self.installment_method_combo.addItem(method.value, method)
+        record_button = QPushButton("Record Installment for Selected Order")
+        record_button.clicked.connect(self._handle_record_installment)
+        installment_form.addRow("Amount (Rs.):", self.installment_amount_input)
+        installment_form.addRow("Method:", self.installment_method_combo)
+        installment_form.addRow(record_button)
+        layout.addLayout(installment_form)
+
+        return panel
