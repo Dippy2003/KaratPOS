@@ -60,3 +60,57 @@ class ReportsScreen(QWidget):
         self.tabs.addTab(self._build_other_tab(), "Old Gold / Returns")
         self.tabs.addTab(self._build_forecast_tab(), "Forecast")
         layout.addWidget(self.tabs, stretch=1)
+
+    def _build_shared_results_table(self) -> QTableWidget:
+        table = QTableWidget(0, 0)
+        table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        return table
+
+    def _build_export_row(self) -> QHBoxLayout:
+        row = QHBoxLayout()
+        export_csv_button = QPushButton("Export CSV")
+        export_csv_button.clicked.connect(self._handle_export_csv)
+        export_pdf_button = QPushButton("Export PDF")
+        export_pdf_button.clicked.connect(self._handle_export_pdf)
+        row.addWidget(export_csv_button)
+        row.addWidget(export_pdf_button)
+        row.addStretch()
+        return row
+
+    def _build_sales_tab(self) -> QWidget:
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+
+        controls = QHBoxLayout()
+        self.sales_start_date = QDateEdit()
+        self.sales_start_date.setCalendarPopup(True)
+        self.sales_start_date.setDate(QDate.currentDate().addDays(-7))
+        self.sales_end_date = QDateEdit()
+        self.sales_end_date.setCalendarPopup(True)
+        self.sales_end_date.setDate(QDate.currentDate())
+
+        daily_button = QPushButton("Today's Sales Report")
+        daily_button.clicked.connect(self._handle_show_daily_report)
+        range_button = QPushButton("Date-Range Sales Report")
+        range_button.clicked.connect(self._handle_show_range_report)
+        profit_button = QPushButton("Profit by Category")
+        profit_button.clicked.connect(self._handle_show_profit_report)
+
+        controls.addWidget(QLabel("From:"))
+        controls.addWidget(self.sales_start_date)
+        controls.addWidget(QLabel("To:"))
+        controls.addWidget(self.sales_end_date)
+        controls.addWidget(daily_button)
+        controls.addWidget(range_button)
+        controls.addWidget(profit_button)
+        layout.addLayout(controls)
+
+        self.sales_summary_label = QLabel("")
+        layout.addWidget(self.sales_summary_label)
+
+        self.sales_table = self._build_shared_results_table()
+        layout.addWidget(self.sales_table, stretch=1)
+        layout.addLayout(self._build_export_row())
+
+        return tab
