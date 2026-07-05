@@ -73,3 +73,43 @@ class SuppliersScreen(QWidget):
         layout.addWidget(self.supplier_list_table)
 
         return box
+
+    def _build_purchase_panel(self) -> QWidget:
+        box = QGroupBox("Record New Purchase (goods received)")
+        form = QFormLayout(box)
+
+        self.purchase_supplier_combo = QComboBox()
+        form.addRow("Supplier:", self.purchase_supplier_combo)
+
+        self.item_name_input = QLineEdit()
+        self.category_combo = QComboBox()
+        for cat in get_all_categories():
+            self.category_combo.addItem(cat.name, cat.id)
+        self.purity_combo = QComboBox()
+        for purity in Purity:
+            self.purity_combo.addItem(purity.value, purity)
+        self.gross_weight_input = QLineEdit()
+        self.net_weight_input = QLineEdit()
+        self.making_charge_type_combo = QComboBox()
+        self.making_charge_type_combo.addItem("Flat (Rs.)", MakingChargeType.FLAT)
+        self.making_charge_type_combo.addItem("Percent of gold value", MakingChargeType.PERCENT)
+        self.making_charge_value_input = QLineEdit()
+        self.stone_value_input = QLineEdit()
+        self.stone_value_input.setText("0")
+        self.cost_price_input = QLineEdit()
+
+        form.addRow("Item name:", self.item_name_input)
+        form.addRow("Category:", self.category_combo)
+        form.addRow("Purity:", self.purity_combo)
+        form.addRow("Gross weight (g):", self.gross_weight_input)
+        form.addRow("Net weight (g):", self.net_weight_input)
+        form.addRow("Making charge type:", self.making_charge_type_combo)
+        form.addRow("Making charge value:", self.making_charge_value_input)
+        form.addRow("Stone value (Rs.):", self.stone_value_input)
+        form.addRow("Cost price (Rs.):", self.cost_price_input)
+
+        record_button = QPushButton("Record Purchase")
+        record_button.clicked.connect(self._handle_record_purchase)
+        form.addRow(record_button)
+
+        return box
