@@ -84,3 +84,39 @@ def create_advance_order(
             )
         )
         return _to_row(order)
+
+
+def record_installment_payment(order_id: int, amount: Decimal, method: PaymentMethod) -> AdvanceOrderRow:
+    if amount <= 0:
+        raise ValidationError("Payment amount must be greater than zero.")
+
+    with get_session() as session:
+        order = session.get(AdvanceOrder, order_id)
+        if order is None:
+            raise ValidationError("Advance order not found.")
+        if order.status != AdvanceOrderStatus.OPEN:
+            raise ValidationError(f"Cannot record a payment on a {order.status.value.lower()} order.")
+        if amount > Decimal(order.balance):
+            raise ValidationError(f"Payment (Rs. {amount:,.2f}) exceeds the remaining balance (Rs. {order.balance:,.2f}).")
+
+        session.add(AdvancePayment(order_id=order.id, payment_date=date.today(), amount=amount, method=method))
+        order.advance_paid = Decimal(order.advance_paid) + amount
+        order.balance = Decimal(order.balance) - amount
+        if order.balance <= 0:
+            order.status = AdvanceOrderStatus.FULFILLED
+
+        session.add(
+            AuditLog(
+                user_id=None,
+                action=f"Recorded Rs. {amount:,.2f} installment on advance order #{order.id}",
+                entity_type="AdvanceOrder",
+                entity_id=order.id,
+            )
+        )
+        return _to_row(order)
+
+
+def get_all_advance_orders() -> list[AdvanceOrderRow]:
+    with get_session() as session:
+        rows = session.scalars(select(AdvanceOrder).order_by(AdvanceOrder.id.desc())).all()
+        return [_to_row(o) for o in rows]
