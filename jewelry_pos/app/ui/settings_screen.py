@@ -41,6 +41,7 @@ class SettingsScreen(QWidget):
         layout.addWidget(self._build_shop_details_box())
         layout.addWidget(self._build_sales_rules_box())
         layout.addWidget(self._build_printer_box())
+        layout.addWidget(self._build_phone_bridge_box())
         layout.addWidget(self._build_backup_box())
         layout.addStretch()
 
