@@ -25,6 +25,7 @@ from app.database.models import UserRole
 from app.services.auth_service import AuthResult, log_logout
 from app.ui.advance_orders_screen import AdvanceOrdersScreen
 from app.ui.audit_log_screen import AuditLogScreen
+from app.ui.change_password_dialog import ChangePasswordDialog
 from app.ui.customers_screen import CustomersScreen
 from app.ui.dashboard_screen import DashboardScreen
 from app.ui.gold_rate_screen import GoldRateScreen
@@ -122,6 +123,11 @@ class MainWindow(QMainWindow):
         self.nav_list.currentRowChanged.connect(self._on_nav_changed)
         layout.addWidget(self.nav_list, stretch=1)
 
+        change_password_button = QPushButton("Change Password")
+        change_password_button.setStyleSheet("padding: 12px; margin: 10px 10px 0 10px;")
+        change_password_button.clicked.connect(self._handle_change_password)
+        layout.addWidget(change_password_button)
+
         logout_button = QPushButton("Logout")
         logout_button.setStyleSheet("padding: 12px; margin: 10px;")
         logout_button.clicked.connect(self._handle_logout)
@@ -207,6 +213,10 @@ class MainWindow(QMainWindow):
     def _on_nav_changed(self, index: int) -> None:
         if index >= 0:
             self.stack.setCurrentIndex(index)
+
+    def _handle_change_password(self) -> None:
+        dialog = ChangePasswordDialog(self.auth_result.user_id, self.auth_result.username, parent=self)
+        dialog.exec()
 
     def _handle_logout(self) -> None:
         confirm = QMessageBox.question(
