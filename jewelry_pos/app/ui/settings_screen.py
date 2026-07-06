@@ -102,6 +102,30 @@ class SettingsScreen(QWidget):
 
         return box
 
+    def _build_phone_bridge_box(self) -> QWidget:
+        box = QGroupBox("Phone Camera Scanning Bridge (LAN only, bonus feature)")
+        layout = QVBoxLayout(box)
+
+        info = QLabel(
+            "Lets staff scan item QR tags with their phone camera over the shop's Wi-Fi. "
+            "No internet is used -- this only works on the local network."
+        )
+        info.setWordWrap(True)
+        layout.addWidget(info)
+
+        self.bridge_toggle_button = QPushButton("Start Phone Bridge")
+        self.bridge_toggle_button.clicked.connect(self._handle_toggle_phone_bridge)
+        layout.addWidget(self.bridge_toggle_button)
+
+        self.bridge_status_label = QLabel("Phone bridge is not running.")
+        layout.addWidget(self.bridge_status_label)
+
+        self.bridge_qr_label = QLabel()
+        self.bridge_qr_label.setFixedSize(150, 150)
+        layout.addWidget(self.bridge_qr_label)
+
+        return box
+
     def _build_backup_box(self) -> QWidget:
         box = QGroupBox("Backups")
         layout = QVBoxLayout(box)
