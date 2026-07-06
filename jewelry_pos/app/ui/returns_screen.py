@@ -202,5 +202,22 @@ class ReturnsScreen(QWidget):
             f"Item status: {result.item_status.value}.",
         )
 
+        refund_amount = Decimal(str(self.refund_amount_input.value()))
+        if refund_amount > 0 and self.on_start_exchange is not None:
+            start_exchange = QMessageBox.question(
+                self, "Start Exchange?",
+                f"Start a new sale with the Rs. {refund_amount:,.2f} refund applied as store credit?\n\n"
+                "If the new sale's total is higher, the customer pays the difference. "
+                "If it's lower, the remaining credit is returned as change.",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+            if start_exchange == QMessageBox.StandardButton.Yes:
+                set_pending_exchange_credit(
+                    amount=refund_amount, source_return_id=result.return_id,
+                    note=f"Exchange credit from return #{result.return_id}",
+                )
+                self.on_start_exchange()
+                return  # screen is about to be swapped out by MainWindow
+
         self.reason_input.clear()
         self._handle_find_invoice()
