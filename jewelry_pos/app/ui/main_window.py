@@ -34,6 +34,7 @@ from app.ui.rate_header_widget import RateHeaderWidget
 from app.ui.repairs_screen import RepairsScreen
 from app.ui.reports_screen import ReportsScreen
 from app.ui.returns_screen import ReturnsScreen
+from app.ui.settings_screen import SettingsScreen
 from app.ui.stock_take_screen import StockTakeScreen
 from app.ui.suppliers_screen import SuppliersScreen
 from app.ui.transaction_history_screen import TransactionHistoryScreen
