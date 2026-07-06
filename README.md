@@ -351,15 +351,15 @@ The system is built in demoable phases. ✅ = must run and be testable before mo
 | Phase | Scope | Status |
 |---|---|---|
 | **1** | Foundation — schema, DB init/seed, login, role-based nav shell | ✅ Complete |
-| **2** | Gold rate management, inventory CRUD, QR tag printing | 🔄 In Progress |
-| **3** | POS core — cart, pricing, mixed payments, atomic sale, receipts *(MVP)* | ⏳ Planned |
-| **4** | Webcam QR scanning in POS | ⏳ Planned |
-| **5** | Customers, old gold exchange, transaction history, cancellations | ⏳ Planned |
-| **6** | Returns & exchanges | ⏳ Planned |
-| **7** | Suppliers, purchases, repairs, advance orders/installments | ⏳ Planned |
-| **8** | Reports & analytics, audit log viewer, stock take, low-stock alerts | ⏳ Planned |
-| **9** | Settings, backups, thermal printing | ⏳ Planned |
-| **10** | Phone scanning bridge, PyInstaller + Inno Setup packaging, polish | ⏳ Planned |
+| **2** | Gold rate management, inventory CRUD, QR tag printing | ✅ Complete |
+| **3** | POS core — cart, pricing, mixed payments, atomic sale, receipts *(MVP)* | ✅ Complete |
+| **4** | Webcam QR scanning in POS | ✅ Complete |
+| **5** | Customers, old gold exchange, transaction history, cancellations | ✅ Complete |
+| **6** | Returns & exchanges | ✅ Complete |
+| **7** | Suppliers, purchases, repairs, advance orders/installments | ✅ Complete |
+| **8** | Reports & analytics, audit log viewer, stock take, low-stock alerts | ✅ Complete |
+| **9** | Settings, backups, thermal printing | ✅ Complete |
+| **10** | Phone scanning bridge, PyInstaller + Inno Setup packaging, polish | ✅ Complete |
 
 ---
 
