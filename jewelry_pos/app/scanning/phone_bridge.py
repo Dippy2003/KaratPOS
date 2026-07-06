@@ -84,3 +84,35 @@ def create_flask_app() -> Flask:
         return jsonify({"status": "ok"})
 
     return flask_app
+
+
+class PhoneBridgeServer:
+    """Runs the Flask app in a background thread so it never blocks the Qt event loop."""
+
+    def __init__(self, port: int = 5000) -> None:
+        self.port = port
+        self._flask_app = create_flask_app()
+        self._thread: threading.Thread | None = None
+
+    def start(self) -> None:
+        if self._thread is not None and self._thread.is_alive():
+            return
+        self._thread = threading.Thread(
+            target=self._flask_app.run,
+            kwargs={"host": "0.0.0.0", "port": self.port, "debug": False, "use_reloader": False},
+            daemon=True,
+        )
+        self._thread.start()
+
+    def get_url(self) -> str:
+        return f"http://{get_lan_ip()}:{self.port}/"
+
+    def drain_scanned_codes(self) -> list[str]:
+        """Non-blocking: pull all codes scanned since the last drain."""
+        codes = []
+        while True:
+            try:
+                codes.append(_scanned_code_queue.get_nowait())
+            except queue.Empty:
+                break
+        return codes
