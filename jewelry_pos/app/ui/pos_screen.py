@@ -35,6 +35,7 @@ from app.services.customer_service import find_by_phone
 from app.services.gold_rate_service import get_latest_rate, has_todays_rate_for_all_purities
 from app.services.item_service import get_item_by_code
 from app.services.pricing_service import calculate_item_price
+from app.scanning.bridge_singleton import get_bridge_server, is_bridge_running
 from app.services.reservation_service import ReservationError, release_item, reserve_item
 from app.services.sales_service import OldGoldExchangeInput, PaymentInput, SaleError, complete_sale
 from app.services.settings_service import get_bool_setting, get_setting
