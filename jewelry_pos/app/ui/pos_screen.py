@@ -323,6 +323,46 @@ class POSScreen(QWidget):
         self.paid_total_label.setText(f"Total Paid: Rs. {paid_total:,.2f}")
         self.balance_label.setText(f"Balance to Return: Rs. {max(balance, Decimal('0')):,.2f}")
 
+    def _check_discount_approval(self, discount: Decimal) -> bool:
+        """
+        If the discount exceeds the configured approval threshold (as a
+        % of cart subtotal), require an admin to re-authenticate before
+        the sale proceeds. Returns True if the sale may continue.
+        """
+        subtotal = self.cart.subtotal
+        if subtotal <= 0:
+            return True
+
+        discount_percent = (discount / subtotal) * Decimal("100")
+        try:
+            threshold = Decimal(get_setting("discount_approval_threshold_percent"))
+        except Exception:
+            threshold = Decimal("10")
+
+        if discount_percent <= threshold:
+            return True
+
+        username, ok = QInputDialog.getText(
+            self, "Admin Approval Required",
+            f"This discount ({discount_percent:.1f}%) exceeds the {threshold}% approval threshold.\n"
+            "Enter an ADMIN username to approve:",
+        )
+        if not ok or not username:
+            return False
+
+        password, ok = QInputDialog.getText(
+            self, "Admin Approval Required", "Admin password:", QLineEdit.EchoMode.Password,
+        )
+        if not ok or not password:
+            return False
+
+        result = authenticate(username, password)
+        if not result.success or result.role != UserRole.ADMIN:
+            QMessageBox.warning(self, "Approval Denied", "Invalid admin credentials. Sale not completed.")
+            return False
+
+        return True
+
     def _handle_complete_sale(self) -> None:
         if not self.cart.lines:
             QMessageBox.warning(self, "Empty Cart", "Add at least one item before completing the sale.")
