@@ -11,6 +11,7 @@
 3. [Installing KaratPOS](#3-installing-karatpos)
 4. [Logging In For the First Time](#4-logging-in-for-the-first-time)
 5. [Understanding the Screen Layout](#5-understanding-the-screen-layout)
+   - [5a. Changing Your Password](#5a-changing-your-password)
 6. [The One Idea You Must Understand: Live Gold Pricing](#6-the-one-idea-you-must-understand-live-gold-pricing)
 7. [Your Daily Opening Routine](#7-your-daily-opening-routine)
 8. [Walkthrough: Making Your First Sale](#8-walkthrough-making-your-first-sale)
@@ -29,9 +30,10 @@
    - [9.12 Reports & Analytics](#912-reports--analytics)
    - [9.13 Audit Log](#913-audit-log)
    - [9.14 Settings](#914-settings)
-10. [Who Can Do What (Roles)](#10-who-can-do-what-roles)
-11. [Common Questions & Troubleshooting](#11-common-questions--troubleshooting)
-12. [Keeping Your Data Safe](#12-keeping-your-data-safe)
+10. [Understanding Status Labels](#10-understanding-status-labels)
+11. [Who Can Do What (Roles)](#11-who-can-do-what-roles)
+12. [Common Questions & Troubleshooting](#12-common-questions--troubleshooting)
+13. [Keeping Your Data Safe](#13-keeping-your-data-safe)
 
 ---
 
@@ -132,7 +134,18 @@ Every screen in KaratPOS shares the same layout, so once you learn it, you can f
 - **Top bar** (very top of the window): always shows **today's gold rate** for all four purities (24K, 22K, 21K, 18K). This is visible no matter which screen you're on, so you're never guessing what today's price is.
 - **Left sidebar**: your menu. Click any item to switch screens. The sidebar **only shows the screens your role is allowed to use** — for example, a Cashier won't see "Gold Rates" or "Settings" in their list at all.
 - **Main area** (center/right): the screen you're currently working on.
+- **Change Password button**: near the bottom of the sidebar, available to **every** role. See [Section 6a](#6a-changing-your-password) below.
 - **Logout button**: bottom of the sidebar. Always click this when you're done, especially on a shared shop computer.
+
+### 5a. Changing Your Password
+
+Any user — Admin, Cashier, or Sales — can change their own password at any time by clicking **Change Password** in the sidebar.
+
+![Change Password dialog](screenshots/17_change_password.png)
+
+You must type your **current** password correctly before a new one is accepted (this stops someone else at an unlocked computer from locking you out of your own account). The new password must be at least 6 characters and typed twice to confirm.
+
+> **Do this immediately** the first time you log in with any of the default demo accounts (`admin123`, `cashier123`, `sales123`) — the login screen will remind you, but changing it is a manual step you must do yourself using this button.
 
 ---
 
@@ -192,13 +205,13 @@ The moment an item is added to the cart, it is marked **RESERVED** in the system
 
 **Step 5 — Enter payment.** Choose a payment method (Cash, Card, Bank Transfer, Mobile) and type the amount received. You can click **"+ Add Payment Method"** to split a single sale across more than one method — for example, part cash and part card. If the customer is also trading in old gold, click **Old Gold Exchange** to record that separately (see the description under [Point of Sale](#94-point-of-sale) below); its value is added automatically as one of the payment lines.
 
-**Step 6 — Click "Complete Sale."** The system will:
+**Step 6 — Click "Complete Sale"** (or press **F12** on the keyboard — it does the same thing). The system will:
 1. Save the invoice permanently (this cannot be undone by a crash — it's a single all-or-nothing database operation).
 2. Mark the item(s) as **SOLD**.
-3. Automatically generate a PDF receipt.
+3. Generate a PDF receipt and save it to the `data/receipts` folder (named after the invoice number, e.g. `INV-2026-000001.pdf`). It is **not** automatically opened or sent to a printer — open that PDF file yourself to view or print it, unless your shop has thermal printing turned on in Settings (see [9.14](#914-settings)), in which case it also prints straight to the receipt printer.
 4. Show you the invoice number and any change due.
 
-That's a complete sale, start to finish.
+That's a complete sale, start to finish. If you need to print the receipt again later — for example, the printer was out of paper — go to [Transaction History](#97-transaction-history) and use **Reprint**, rather than hunting for the original PDF file.
 
 ---
 
@@ -247,7 +260,9 @@ Other things you can do here:
 
 The main selling screen — see the full walkthrough in [Section 8](#8-walkthrough-making-your-first-sale) above. A few extra details:
 
-- **Old Gold Exchange**: click this button when a customer wants to trade in old jewelry as part of a purchase. You enter its weight and assessed purity; the system suggests a buy-back rate (today's rate minus a small margin your Admin configures) which you can adjust. The value is automatically applied as a credit toward the new purchase.
+- **Old Gold Exchange**: click this button when a customer wants to trade in old jewelry as part of a purchase. You enter its weight and assessed purity; the system suggests a buy-back rate (today's rate minus a small margin your Admin configures) which you can adjust. The credit value calculates live as you type, and is automatically applied as a credit toward the new purchase.
+
+  ![Old Gold Exchange dialog](screenshots/18_old_gold_exchange.png)
 - Removing an item from the cart (select it, click **"Remove Selected Line"**) immediately releases its RESERVED lock, making it available for sale again elsewhere.
 - If you close the app with items still sitting in an unfinished cart, don't worry — the next time the app starts, it automatically releases those items back to available stock.
 
@@ -369,7 +384,32 @@ Shop-wide configuration, organized into sections:
 
 ---
 
-## 10. Who Can Do What (Roles)
+## 10. Understanding Status Labels
+
+You'll see these status words throughout the system. Here's what each one means.
+
+**Item statuses** (shown in Inventory, Stock Take, and elsewhere):
+
+| Status | Meaning |
+|---|---|
+| `AVAILABLE` | In stock, not committed to anything — can be sold, or picked up in a stock take. |
+| `RESERVED` | Currently sitting in someone's POS cart, mid-sale. Locked so no one else can sell it. Automatically released back to `AVAILABLE` if the cart is cleared, or if the app is closed/crashes before the sale finishes. |
+| `SOLD` | Sale completed — no longer in stock. |
+| `RETURNED_SCRAP` | Came back via a return, but was marked "not resellable" — sitting in scrap, not for sale. |
+| `IN_REPAIR` | Currently with a customer's item logged for repair (used internally by the repair workflow). |
+
+**Invoice statuses** (shown in Transaction History):
+
+| Status | Meaning |
+|---|---|
+| `COMPLETED` | A normal, fully paid sale with nothing returned or cancelled. |
+| `PARTIALLY_RETURNED` | At least one line item from this invoice was returned, but not all of them. |
+| `RETURNED` | Every line item on this invoice has been returned. |
+| `CANCELLED` | The entire invoice was cancelled by an Admin (same day only) — as if the sale never happened; all items go back to `AVAILABLE`. |
+
+---
+
+## 11. Who Can Do What (Roles)
 
 | | ADMIN | CASHIER | SALES |
 |---|:---:|:---:|:---:|
@@ -388,11 +428,13 @@ Shop-wide configuration, organized into sections:
 | Audit Log | ✅ | ❌ | ❌ |
 | Settings | ✅ | ❌ | ❌ |
 
-If a screen doesn't appear in your sidebar, your account's role simply doesn't have access to it — this isn't a bug, it's by design, so staff only see what's relevant to their job.
+If a screen doesn't appear in your sidebar, your account's role simply doesn't have access to it — this isn't a bug, it's by design, so staff only see what's relevant to their job. For comparison, here is the same application logged in as a **Cashier** — notice the sidebar is noticeably shorter than the Admin view shown throughout this manual, with no Gold Rates, Reports, Audit Log, or Settings:
+
+![Cashier role view — a shorter sidebar than Admin](screenshots/16_cashier_role_view.png)
 
 ---
 
-## 11. Common Questions & Troubleshooting
+## 12. Common Questions & Troubleshooting
 
 **"The POS screen won't let me complete a sale — it says something about today's rate."**
 An Admin needs to go to Gold Rates and enter today's rate for every purity. If your shop has turned on the "block sale without today's rate" setting, this is required before any sale can be completed.
@@ -415,9 +457,18 @@ Copy the `data` folder (found next to the installed program, or inside `jewelry_
 **"I forgot the admin password."**
 There is no built-in password reset from the login screen (by design, for security). Contact whoever manages your system's database directly.
 
+**"Is there a faster way to complete a sale than clicking the button?"**
+Yes — press **F12** on your keyboard at any time while in the Point of Sale screen; it does exactly the same thing as clicking "Complete Sale."
+
+**"Can I just close the window/shut down the computer whenever?"**
+Yes. There's no special shutdown procedure — closing the app is always safe because sales are only ever saved completely or not at all (see "the app crashed" question above). Just make sure any sale you intend to keep has already been completed first.
+
+**"Where do printed QR tags, receipts, and reports actually get saved?"**
+Everything is saved inside the `data` folder, in clearly named subfolders: `data/receipts` (sale receipts), `data/tags` (QR tag sheets), `data/repair_tickets`, `data/reports` (exported CSV/PDF reports), and `data/backups` (database backups).
+
 ---
 
-## 12. Keeping Your Data Safe
+## 13. Keeping Your Data Safe
 
 - KaratPOS automatically backs up your entire database once per day, the first time the app opens that day. The last 30 daily backups are always kept.
 - You can also make a backup on demand any time from **Settings → Backups → Backup Now**.
