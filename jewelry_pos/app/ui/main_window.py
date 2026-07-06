@@ -146,17 +146,18 @@ class MainWindow(QMainWindow):
         if label == "Inventory":
             return InventoryScreen(self.auth_result.user_id)
         if label == "Point of Sale":
-            return POSScreen(
+            self.pos_screen = POSScreen(
                 self.auth_result.user_id,
                 self.auth_result.full_name,
                 on_sale_completed=self._handle_sale_completed,
             )
+            return self.pos_screen
         if label == "Customers":
             return CustomersScreen()
         if label == "Transaction History":
             return TransactionHistoryScreen(self.auth_result.user_id, self.auth_result.role)
         if label == "Returns & Exchanges":
-            return ReturnsScreen(self.auth_result.user_id)
+            return ReturnsScreen(self.auth_result.user_id, on_start_exchange=self._handle_start_exchange)
         if label == "Suppliers & Purchases":
             return SuppliersScreen(self.auth_result.user_id)
         if label == "Repairs":
