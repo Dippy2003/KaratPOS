@@ -178,6 +178,20 @@ class MainWindow(QMainWindow):
         if hasattr(self, "dashboard_screen"):
             self.dashboard_screen.refresh()
 
+    def _handle_start_exchange(self) -> None:
+        """
+        Called by ReturnsScreen after the user opts to start an exchange
+        sale. Switches the sidebar to the already-built Point of Sale
+        page and re-checks it for the pending exchange credit -- POS
+        pages are built once at startup and reused, so its constructor
+        already ran; we must explicitly re-trigger the check here.
+        """
+        if "Point of Sale" not in self.allowed_pages or not hasattr(self, "pos_screen"):
+            return
+        pos_index = self.allowed_pages.index("Point of Sale")
+        self.nav_list.setCurrentRow(pos_index)
+        self.pos_screen._apply_pending_exchange_credit()
+
     def _placeholder_page(self, label: str) -> QWidget:
         page = QWidget()
         layout = QVBoxLayout(page)
