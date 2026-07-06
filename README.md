@@ -189,6 +189,90 @@ KaratPOS/
 
 ---
 
+## Entity-Relationship Diagram
+
+```mermaid
+erDiagram
+    USERS ||--o{ GOLD_RATES : enters
+    USERS ||--o{ INVOICES : cashiers
+    USERS ||--o{ AUDIT_LOGS : performs
+
+    CATEGORIES ||--o{ ITEMS : contains
+    SUPPLIERS ||--o{ ITEMS : supplies
+    SUPPLIERS ||--o{ PURCHASES : fulfills
+
+    ITEMS ||--o{ INVOICE_ITEMS : "sold as"
+    ITEMS ||--o{ PURCHASE_ITEMS : "received as"
+
+    CUSTOMERS ||--o{ INVOICES : places
+    CUSTOMERS ||--o{ REPAIRS : requests
+    CUSTOMERS ||--o{ ADVANCE_ORDERS : orders
+    CUSTOMERS ||--o{ OLD_GOLD_RECEIPTS : sells
+
+    INVOICES ||--o{ INVOICE_ITEMS : contains
+    INVOICES ||--o{ PAYMENTS : "paid via"
+    INVOICES ||--o{ RETURNS : "returned via"
+    INVOICES ||--o| OLD_GOLD_RECEIPTS : "exchange on"
+
+    INVOICE_ITEMS ||--o{ RETURNS : "returned as"
+
+    PURCHASES ||--o{ PURCHASE_ITEMS : contains
+
+    ADVANCE_ORDERS ||--o{ ADVANCE_PAYMENTS : installments
+
+    USERS {
+        int id PK
+        string username
+        string password_hash
+        enum role
+    }
+    GOLD_RATES {
+        int id PK
+        date rate_date
+        enum purity
+        decimal rate_per_gram
+        int entered_by_id FK
+    }
+    ITEMS {
+        int id PK
+        string item_code
+        int category_id FK
+        int supplier_id FK
+        enum purity
+        decimal net_weight_g
+        enum status
+    }
+    CUSTOMERS {
+        int id PK
+        string name
+        string phone
+        decimal total_spent
+    }
+    INVOICES {
+        int id PK
+        string invoice_no
+        int customer_id FK
+        int user_id FK
+        decimal grand_total
+        enum status
+    }
+    INVOICE_ITEMS {
+        int id PK
+        int invoice_id FK
+        int item_id FK
+        decimal gold_rate_used
+        decimal line_total
+    }
+    PAYMENTS {
+        int id PK
+        int invoice_id FK
+        enum method
+        decimal amount
+    }
+```
+
+---
+
 ## Roles & Permissions
 
 | Role | Can Access |
