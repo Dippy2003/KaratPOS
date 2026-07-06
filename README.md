@@ -16,12 +16,15 @@ A complete, installable, offline-first desktop ERP & Point-of-Sale system built 
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)]()
 [![Status](https://img.shields.io/badge/Status-All_10_Phases_Complete-brightgreen?style=for-the-badge)]()
 
+📖 **[Read the full User Manual](docs/USER_MANUAL.md)** — a zero-knowledge, step-by-step guide with real screenshots of every screen.
+
 </div>
 
 ---
 
 ## Table of Contents
 
+- [📖 Full User Manual](docs/USER_MANUAL.md) *(separate document — install steps, plain-language explanations, and a screen-by-screen guide with screenshots)*
 - [Overview](#overview)
 - [Tech Stack](#tech-stack)
 - [Core Domain Rule — Dynamic Gold Pricing](#core-domain-rule--dynamic-gold-pricing)
