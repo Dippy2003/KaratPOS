@@ -36,6 +36,7 @@ from app.services.gold_rate_service import get_latest_rate, has_todays_rate_for_
 from app.services.item_service import get_item_by_code
 from app.services.pricing_service import calculate_item_price
 from app.scanning.bridge_singleton import get_bridge_server, is_bridge_running
+from app.services.exchange_state import take_pending_exchange_credit
 from app.services.reservation_service import ReservationError, release_item, reserve_item
 from app.services.sales_service import OldGoldExchangeInput, PaymentInput, SaleError, complete_sale
 from app.services.settings_service import get_bool_setting, get_setting
@@ -56,6 +57,7 @@ class POSScreen(QWidget):
         self.old_gold_input: OldGoldExchangeInput | None = None
         self._build_ui()
         self._start_phone_bridge_polling()
+        self._apply_pending_exchange_credit()
 
     def _start_phone_bridge_polling(self) -> None:
         """
@@ -158,6 +160,30 @@ class POSScreen(QWidget):
         self.cart.add_line(CartLine(item=item_row, price=price))
         self._refresh_cart_table()
         self.code_input.setFocus()
+
+    def _apply_pending_exchange_credit(self) -> None:
+        """
+        If the Returns screen just processed a return and the user chose
+        to start an exchange, pre-fill the first payment row with a
+        STORE_CREDIT payment for the refund amount. The cashier can then
+        add more items/payments to cover any price difference either way.
+        """
+        pending = take_pending_exchange_credit()
+        if pending is None:
+            return
+
+        method_combo, amount_input = self.payment_rows[0]
+        index = method_combo.findData(PaymentMethod.STORE_CREDIT)
+        if index >= 0:
+            method_combo.setCurrentIndex(index)
+        amount_input.setValue(float(pending.amount))
+        self._update_totals()
+
+        QMessageBox.information(
+            self, "Exchange Credit Applied",
+            f"Rs. {pending.amount:,.2f} store credit from return #{pending.source_return_id} "
+            "has been applied as a payment. Add items to the cart, then complete the sale.",
+        )
 
     def _handle_open_webcam_scan(self) -> None:
         dialog = WebcamScanDialog(self)

@@ -31,11 +31,13 @@ from app.services.forecast_service import get_sales_forecast
 from app.services.report_service import (
     get_daily_sales_report,
     get_date_range_sales_report,
+    get_monthly_comparison,
     get_old_gold_report,
     get_profit_by_category,
     get_returns_report,
     get_slow_moving_stock,
     get_stock_valuation_report,
+    get_yearly_comparison,
 )
 
 
@@ -58,6 +60,7 @@ class ReportsScreen(QWidget):
         self.tabs.addTab(self._build_sales_tab(), "Sales")
         self.tabs.addTab(self._build_stock_tab(), "Stock")
         self.tabs.addTab(self._build_other_tab(), "Old Gold / Returns")
+        self.tabs.addTab(self._build_comparison_tab(), "Monthly/Yearly Comparison")
         self.tabs.addTab(self._build_forecast_tab(), "Forecast")
         layout.addWidget(self.tabs, stretch=1)
 
@@ -169,6 +172,26 @@ class ReportsScreen(QWidget):
 
         return tab
 
+    def _build_comparison_tab(self) -> QWidget:
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+
+        controls = QHBoxLayout()
+        monthly_button = QPushButton("Show Last 12 Months")
+        monthly_button.clicked.connect(self._handle_show_monthly_comparison)
+        yearly_button = QPushButton("Show Last 5 Years")
+        yearly_button.clicked.connect(self._handle_show_yearly_comparison)
+        controls.addWidget(monthly_button)
+        controls.addWidget(yearly_button)
+        controls.addStretch()
+        layout.addLayout(controls)
+
+        self.comparison_figure = Figure(figsize=(8, 4))
+        self.comparison_canvas = FigureCanvas(self.comparison_figure)
+        layout.addWidget(self.comparison_canvas, stretch=1)
+
+        return tab
+
     def _build_forecast_tab(self) -> QWidget:
         tab = QWidget()
         layout = QVBoxLayout(tab)
@@ -274,6 +297,26 @@ class ReportsScreen(QWidget):
         ]
         self._set_table_data(self.other_table, headers, rows)
         self._current_report_name = "returns_report"
+
+    def _handle_show_monthly_comparison(self) -> None:
+        data = get_monthly_comparison(months=12)
+        self._render_comparison_chart(data, "Sales by Month (last 12 months)")
+
+    def _handle_show_yearly_comparison(self) -> None:
+        data = get_yearly_comparison(years=5)
+        self._render_comparison_chart(data, "Sales by Year (last 5 years)")
+
+    def _render_comparison_chart(self, data, title: str) -> None:
+        self.comparison_figure.clear()
+        ax = self.comparison_figure.add_subplot(111)
+        labels = [label for label, _ in data]
+        values = [float(v) for _, v in data]
+        ax.bar(labels, values, color="#6a1b9a")
+        ax.set_title(title)
+        ax.set_ylabel("Rs.")
+        ax.tick_params(axis="x", rotation=45, labelsize=8)
+        self.comparison_figure.tight_layout()
+        self.comparison_canvas.draw()
 
     def _handle_show_forecast(self) -> None:
         result = get_sales_forecast()

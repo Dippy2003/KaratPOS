@@ -95,6 +95,7 @@ class PaymentMethod(str, enum.Enum):
     BANK_TRANSFER = "BANK_TRANSFER"
     MOBILE = "MOBILE"
     OLD_GOLD = "OLD_GOLD"
+    STORE_CREDIT = "STORE_CREDIT"  # refund from a return, applied as credit on an exchange sale
 
 
 class ScrapStatus(str, enum.Enum):
