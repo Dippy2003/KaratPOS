@@ -365,12 +365,32 @@ The system is built in demoable phases. ✅ = must run and be testable before mo
 
 ## Packaging as a Windows Installer
 
-*(Final phase — not yet implemented)*
+### 1. Build the one-folder executable with PyInstaller
 
-1. **PyInstaller** bundles the app into `dist/JewelryPOS/` (one-folder mode), including OpenCV/pyzbar DLLs.
-2. **Inno Setup** (`build/installer.iss`) produces `JewelryPOS_Setup.exe` with Start Menu + desktop shortcuts.
-3. Database and backups are written to a **writable app-data folder** — never inside `Program Files`.
-4. First run on a fresh install auto-creates the DB and seeds it, then shows the login screen.
+```powershell
+cd jewelry_pos
+venv\Scripts\activate
+pyinstaller build\jewelry_pos.spec --distpath dist --workpath build\work --noconfirm
+```
+
+This produces `jewelry_pos\dist\KaratPOS\KaratPOS.exe` plus all its dependencies in the same folder (OpenCV, pyzbar, and their native DLLs are collected explicitly in the spec file). Run `dist\KaratPOS\KaratPOS.exe` directly to verify the standalone build before packaging it further — no Python installation is required to run it.
+
+### 2. Build the installer with Inno Setup
+
+Install [Inno Setup](https://jrsoftware.org/isinfo.php), then either open `jewelry_pos\build\installer.iss` in the Inno Setup Compiler GUI and click Compile, or run from the command line:
+
+```powershell
+cd jewelry_pos\build
+ISCC.exe installer.iss
+```
+
+This produces `jewelry_pos\build\output\JewelryPOS_Setup.exe` — a single-file installer with Start Menu and optional desktop shortcuts.
+
+### Notes
+
+- The database and backups are **never** bundled into the installer — `app/utils/config.py` resolves all data paths relative to the running executable (`sys.executable` when frozen), so `KaratPOS.exe` creates and seeds `data/jewelry_pos.db` next to itself on first run, exactly like running from source.
+- Data is preserved across upgrades: reinstalling over an existing install does not touch the `data/` folder.
+- The phone-scanning bridge's `html5-qrcode.min.js` is bundled locally (not loaded from a CDN), so that bonus feature also works without internet access on the phone — only LAN connectivity to the desktop PC is required.
 
 ---
 
