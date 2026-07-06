@@ -60,6 +60,7 @@ class ReportsScreen(QWidget):
         self.tabs.addTab(self._build_sales_tab(), "Sales")
         self.tabs.addTab(self._build_stock_tab(), "Stock")
         self.tabs.addTab(self._build_other_tab(), "Old Gold / Returns")
+        self.tabs.addTab(self._build_comparison_tab(), "Monthly/Yearly Comparison")
         self.tabs.addTab(self._build_forecast_tab(), "Forecast")
         layout.addWidget(self.tabs, stretch=1)
 
