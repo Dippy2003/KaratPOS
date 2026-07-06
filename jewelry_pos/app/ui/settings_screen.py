@@ -110,3 +110,26 @@ class SettingsScreen(QWidget):
         layout.addWidget(backup_now_button)
 
         return box
+
+    def _load_current_values(self) -> None:
+        self.shop_name_input.setText(get_setting("shop_name"))
+        self.shop_address_input.setText(get_setting("shop_address"))
+        self.shop_phone_input.setText(get_setting("shop_phone"))
+        self.footer_text_input.setText(get_setting("invoice_footer_text"))
+
+        self.tax_percent_input.setText(get_setting("tax_percent"))
+        self.discount_threshold_input.setText(get_setting("discount_approval_threshold_percent"))
+        self.old_gold_margin_input.setText(get_setting("old_gold_margin_percent"))
+        self.block_sale_checkbox.setChecked(get_bool_setting("block_sale_without_todays_rate"))
+
+        self.thermal_enabled_checkbox.setChecked(get_bool_setting("thermal_printer_enabled"))
+        self.thermal_port_input.setText(get_setting("thermal_printer_port"))
+
+        self._refresh_backup_status()
+
+    def _refresh_backup_status(self) -> None:
+        backups = list_backups()
+        if backups:
+            self.backup_status_label.setText(f"{len(backups)} backup(s) stored. Most recent: {backups[0].name}")
+        else:
+            self.backup_status_label.setText("No backups yet.")
