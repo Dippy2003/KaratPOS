@@ -172,6 +172,26 @@ class ReportsScreen(QWidget):
 
         return tab
 
+    def _build_comparison_tab(self) -> QWidget:
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+
+        controls = QHBoxLayout()
+        monthly_button = QPushButton("Show Last 12 Months")
+        monthly_button.clicked.connect(self._handle_show_monthly_comparison)
+        yearly_button = QPushButton("Show Last 5 Years")
+        yearly_button.clicked.connect(self._handle_show_yearly_comparison)
+        controls.addWidget(monthly_button)
+        controls.addWidget(yearly_button)
+        controls.addStretch()
+        layout.addLayout(controls)
+
+        self.comparison_figure = Figure(figsize=(8, 4))
+        self.comparison_canvas = FigureCanvas(self.comparison_figure)
+        layout.addWidget(self.comparison_canvas, stretch=1)
+
+        return tab
+
     def _build_forecast_tab(self) -> QWidget:
         tab = QWidget()
         layout = QVBoxLayout(tab)
