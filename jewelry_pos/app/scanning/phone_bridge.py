@@ -49,7 +49,12 @@ _MOBILE_PAGE_HTML = """
 
 
 def get_lan_ip() -> str:
-    """Best-effort LAN IP for staff to reach this server from their phone."""
+    """
+    Best-effort LAN IP for staff to reach this server from their phone.
+    The UDP "connect" here never actually sends a packet (UDP connect
+    just resolves local routing), so this works fully offline and
+    makes no real network call.
+    """
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         s.connect(("8.8.8.8", 80))
@@ -58,3 +63,24 @@ def get_lan_ip() -> str:
         return "127.0.0.1"
     finally:
         s.close()
+
+
+def create_flask_app() -> Flask:
+    import os
+
+    static_dir = os.path.join(os.path.dirname(__file__), "static")
+    flask_app = Flask(__name__, static_folder=static_dir, static_url_path="/static")
+
+    @flask_app.route("/")
+    def index():
+        return render_template_string(_MOBILE_PAGE_HTML)
+
+    @flask_app.route("/scan", methods=["POST"])
+    def scan():
+        payload = request.get_json(silent=True) or {}
+        code = (payload.get("code") or "").strip()
+        if code:
+            _scanned_code_queue.put(code)
+        return jsonify({"status": "ok"})
+
+    return flask_app
