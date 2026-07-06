@@ -133,3 +133,39 @@ class SettingsScreen(QWidget):
             self.backup_status_label.setText(f"{len(backups)} backup(s) stored. Most recent: {backups[0].name}")
         else:
             self.backup_status_label.setText("No backups yet.")
+
+    def _handle_save_shop_details(self) -> None:
+        set_setting("shop_name", self.shop_name_input.text())
+        set_setting("shop_address", self.shop_address_input.text())
+        set_setting("shop_phone", self.shop_phone_input.text())
+        set_setting("invoice_footer_text", self.footer_text_input.text())
+        QMessageBox.information(self, "Saved", "Shop details saved.")
+
+    def _handle_save_sales_rules(self) -> None:
+        try:
+            float(self.tax_percent_input.text())
+            float(self.discount_threshold_input.text())
+            float(self.old_gold_margin_input.text())
+        except ValueError:
+            QMessageBox.warning(self, "Invalid Input", "Tax, discount threshold, and margin must be numeric.")
+            return
+
+        set_setting("tax_percent", self.tax_percent_input.text())
+        set_setting("discount_approval_threshold_percent", self.discount_threshold_input.text())
+        set_setting("old_gold_margin_percent", self.old_gold_margin_input.text())
+        set_bool_setting("block_sale_without_todays_rate", self.block_sale_checkbox.isChecked())
+        QMessageBox.information(self, "Saved", "Sales rules saved.")
+
+    def _handle_save_printer_settings(self) -> None:
+        set_bool_setting("thermal_printer_enabled", self.thermal_enabled_checkbox.isChecked())
+        set_setting("thermal_printer_port", self.thermal_port_input.text())
+        QMessageBox.information(self, "Saved", "Printer settings saved.")
+
+    def _handle_backup_now(self) -> None:
+        try:
+            path = run_backup_now()
+        except FileNotFoundError as exc:
+            QMessageBox.warning(self, "Backup Failed", str(exc))
+            return
+        self._refresh_backup_status()
+        QMessageBox.information(self, "Backup Complete", f"Backup saved to:\n{path}")
