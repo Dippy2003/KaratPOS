@@ -14,7 +14,7 @@ A complete, installable, offline-first desktop ERP & Point-of-Sale system built 
 [![Flask](https://img.shields.io/badge/Flask-Phone_Bridge-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![License](https://img.shields.io/badge/License-Academic_Project-lightgrey?style=for-the-badge)]()
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)]()
-[![Status](https://img.shields.io/badge/Status-In_Development-yellow?style=for-the-badge)]()
+[![Status](https://img.shields.io/badge/Status-All_10_Phases_Complete-brightgreen?style=for-the-badge)]()
 
 </div>
 
@@ -28,6 +28,7 @@ A complete, installable, offline-first desktop ERP & Point-of-Sale system built 
 - [Features](#features)
 - [Project Structure](#project-structure)
 - [Database Schema](#database-schema)
+- [Entity-Relationship Diagram](#entity-relationship-diagram)
 - [Roles & Permissions](#roles--permissions)
 - [Getting Started](#getting-started)
 - [Default Login Credentials](#default-login-credentials)
