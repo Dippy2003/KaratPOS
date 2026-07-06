@@ -107,6 +107,9 @@ class PhoneBridgeServer:
     def get_url(self) -> str:
         return f"http://{get_lan_ip()}:{self.port}/"
 
+    def is_running(self) -> bool:
+        return self._thread is not None and self._thread.is_alive()
+
     def drain_scanned_codes(self) -> list[str]:
         """Non-blocking: pull all codes scanned since the last drain."""
         codes = []

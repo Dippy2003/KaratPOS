@@ -20,4 +20,4 @@ def get_bridge_server() -> PhoneBridgeServer:
 
 
 def is_bridge_running() -> bool:
-    return _instance is not None and _instance._thread is not None and _instance._thread.is_alive()
+    return _instance is not None and _instance.is_running()
