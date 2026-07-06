@@ -40,6 +40,18 @@ class DashboardScreen(QWidget):
         self.low_stock_label.setWordWrap(True)
         layout.addWidget(self.low_stock_label)
 
+        charts_row = QHBoxLayout()
+        self.sales_figure = Figure(figsize=(4, 3))
+        self.sales_canvas = FigureCanvas(self.sales_figure)
+        self.payment_figure = Figure(figsize=(4, 3))
+        self.payment_canvas = FigureCanvas(self.payment_figure)
+        self.category_figure = Figure(figsize=(4, 3))
+        self.category_canvas = FigureCanvas(self.category_figure)
+        charts_row.addWidget(self.sales_canvas)
+        charts_row.addWidget(self.payment_canvas)
+        charts_row.addWidget(self.category_canvas)
+        layout.addLayout(charts_row, stretch=1)
+
         layout.addStretch()
 
     def _build_stat_card(self, title: str, initial_value: str) -> QFrame:
