@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QHeaderView,
+    QInputDialog,
     QLabel,
     QLineEdit,
     QMessageBox,
@@ -27,15 +28,16 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.database.models import Item, ItemStatus, PaymentMethod
+from app.database.models import Item, ItemStatus, PaymentMethod, UserRole
+from app.services.auth_service import authenticate
 from app.services.cart import Cart, CartLine
 from app.services.customer_service import find_by_phone
-from app.services.gold_rate_service import get_latest_rate
+from app.services.gold_rate_service import get_latest_rate, has_todays_rate_for_all_purities
 from app.services.item_service import get_item_by_code
 from app.services.pricing_service import calculate_item_price
 from app.services.reservation_service import ReservationError, release_item, reserve_item
 from app.services.sales_service import OldGoldExchangeInput, PaymentInput, SaleError, complete_sale
-from app.services.settings_service import get_setting
+from app.services.settings_service import get_bool_setting, get_setting
 from app.printing.receipt_pdf import ReceiptData, ReceiptLine, ReceiptPaymentLine, generate_receipt_pdf
 from app.ui.old_gold_dialog import OldGoldDialog
 from app.ui.webcam_scan_dialog import WebcamScanDialog
@@ -321,13 +323,65 @@ class POSScreen(QWidget):
         self.paid_total_label.setText(f"Total Paid: Rs. {paid_total:,.2f}")
         self.balance_label.setText(f"Balance to Return: Rs. {max(balance, Decimal('0')):,.2f}")
 
+    def _check_discount_approval(self, discount: Decimal) -> bool:
+        """
+        If the discount exceeds the configured approval threshold (as a
+        % of cart subtotal), require an admin to re-authenticate before
+        the sale proceeds. Returns True if the sale may continue.
+        """
+        subtotal = self.cart.subtotal
+        if subtotal <= 0:
+            return True
+
+        discount_percent = (discount / subtotal) * Decimal("100")
+        try:
+            threshold = Decimal(get_setting("discount_approval_threshold_percent"))
+        except Exception:
+            threshold = Decimal("10")
+
+        if discount_percent <= threshold:
+            return True
+
+        username, ok = QInputDialog.getText(
+            self, "Admin Approval Required",
+            f"This discount ({discount_percent:.1f}%) exceeds the {threshold}% approval threshold.\n"
+            "Enter an ADMIN username to approve:",
+        )
+        if not ok or not username:
+            return False
+
+        password, ok = QInputDialog.getText(
+            self, "Admin Approval Required", "Admin password:", QLineEdit.EchoMode.Password,
+        )
+        if not ok or not password:
+            return False
+
+        result = authenticate(username, password)
+        if not result.success or result.role != UserRole.ADMIN:
+            QMessageBox.warning(self, "Approval Denied", "Invalid admin credentials. Sale not completed.")
+            return False
+
+        return True
+
     def _handle_complete_sale(self) -> None:
         if not self.cart.lines:
             QMessageBox.warning(self, "Empty Cart", "Add at least one item before completing the sale.")
             return
 
+        if get_bool_setting("block_sale_without_todays_rate") and not has_todays_rate_for_all_purities():
+            QMessageBox.warning(
+                self, "Rate Not Entered Today",
+                "Sales are blocked until today's gold rate has been entered for all purities "
+                "(see Settings). Ask an admin to enter today's rate in the Gold Rates screen.",
+            )
+            return
+
         discount = Decimal(str(self.discount_input.value()))
         tax_percent = Decimal(str(self.tax_input.value()))
+
+        if not self._check_discount_approval(discount):
+            return
+
         payments = [
             PaymentInput(method=combo_enum_data(method_combo, PaymentMethod), amount=Decimal(str(amount.value())))
             for method_combo, amount in self.payment_rows

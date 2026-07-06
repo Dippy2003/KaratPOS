@@ -14,6 +14,9 @@ DEFAULTS = {
     "invoice_footer_text": "Thank you for your business!",
     "discount_approval_threshold_percent": "10",
     "old_gold_margin_percent": "5",
+    "block_sale_without_todays_rate": "false",
+    "thermal_printer_enabled": "false",
+    "thermal_printer_port": "",
 }
 
 
@@ -32,3 +35,11 @@ def set_setting(key: str, value: str) -> None:
             session.add(Setting(key=key, value=value))
         else:
             row.value = value
+
+
+def get_bool_setting(key: str) -> bool:
+    return get_setting(key).strip().lower() in ("true", "1", "yes")
+
+
+def set_bool_setting(key: str, value: bool) -> None:
+    set_setting(key, "true" if value else "false")
