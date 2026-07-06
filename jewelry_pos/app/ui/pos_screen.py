@@ -60,6 +60,14 @@ class POSScreen(QWidget):
         self._start_phone_bridge_polling()
         self._apply_pending_exchange_credit()
 
+        # F12 completes the sale without needing the mouse, per the
+        # brief's keyboard-friendly POS requirement (Enter to add, F-keys
+        # for pay/complete). WidgetWithChildrenShortcut keeps it scoped to
+        # this screen so it doesn't fire while another tab is active.
+        complete_sale_shortcut = QShortcut(QKeySequence("F12"), self)
+        complete_sale_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        complete_sale_shortcut.activated.connect(self._handle_complete_sale)
+
     def _start_phone_bridge_polling(self) -> None:
         """
         If the phone scanning bridge is running (started from Settings),
