@@ -6,6 +6,7 @@ manual "Backup Now" button.
 """
 from __future__ import annotations
 
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QCheckBox,
     QFormLayout,
@@ -18,6 +19,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.printing.qr_service import generate_item_qr_image, qr_image_to_png_bytes
+from app.scanning.bridge_singleton import get_bridge_server, is_bridge_running
 from app.services.backup_service import list_backups, run_backup_now
 from app.services.settings_service import get_bool_setting, get_setting, set_bool_setting, set_setting
 
