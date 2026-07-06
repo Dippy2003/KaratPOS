@@ -133,6 +133,59 @@ def get_date_range_sales_report(start_date: date, end_date: date) -> DateRangeSa
         )
 
 
+def get_monthly_comparison(months: int = 12) -> list[tuple[str, Decimal]]:
+    """Total sales per calendar month for the last N months, oldest first, for a bar-chart comparison."""
+    today = date.today()
+    # Walk back `months` calendar months from the first of the current month.
+    first_of_this_month = today.replace(day=1)
+    month_starts = []
+    year, month = first_of_this_month.year, first_of_this_month.month
+    for _ in range(months):
+        month_starts.append(date(year, month, 1))
+        month -= 1
+        if month == 0:
+            month, year = 12, year - 1
+    month_starts.reverse()
+
+    with get_session() as session:
+        results = []
+        for i, month_start in enumerate(month_starts):
+            if i + 1 < len(month_starts):
+                month_end = month_starts[i + 1]
+            else:
+                # last bucket: end at the first of the month AFTER month_start
+                next_month = month_start.month + 1
+                next_year = month_start.year
+                if next_month == 13:
+                    next_month, next_year = 1, next_year + 1
+                month_end = date(next_year, next_month, 1)
+
+            start_dt = datetime.combine(month_start, datetime.min.time())
+            end_dt = datetime.combine(month_end, datetime.min.time())
+            invoices = _invoices_in_range(session, start_dt, end_dt)
+            total = sum((Decimal(inv.grand_total) for inv in invoices), Decimal("0"))
+            results.append((month_start.strftime("%b %Y"), total))
+
+        return results
+
+
+def get_yearly_comparison(years: int = 5) -> list[tuple[str, Decimal]]:
+    """Total sales per calendar year for the last N years, oldest first, for a bar-chart comparison."""
+    current_year = date.today().year
+    year_list = list(range(current_year - years + 1, current_year + 1))
+
+    with get_session() as session:
+        results = []
+        for year in year_list:
+            start_dt = datetime(year, 1, 1)
+            end_dt = datetime(year + 1, 1, 1)
+            invoices = _invoices_in_range(session, start_dt, end_dt)
+            total = sum((Decimal(inv.grand_total) for inv in invoices), Decimal("0"))
+            results.append((str(year), total))
+
+        return results
+
+
 @dataclass(frozen=True)
 class StockValuationReport:
     valuation_date: date
