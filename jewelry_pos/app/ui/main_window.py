@@ -169,6 +169,8 @@ class MainWindow(QMainWindow):
             return ReportsScreen()
         if label == "Audit Log":
             return AuditLogScreen()
+        if label == "Settings":
+            return SettingsScreen()
         return self._placeholder_page(label)
 
     def _handle_sale_completed(self) -> None:
