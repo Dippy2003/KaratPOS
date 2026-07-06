@@ -337,6 +337,10 @@ class POSScreen(QWidget):
 
         discount = Decimal(str(self.discount_input.value()))
         tax_percent = Decimal(str(self.tax_input.value()))
+
+        if not self._check_discount_approval(discount):
+            return
+
         payments = [
             PaymentInput(method=combo_enum_data(method_combo, PaymentMethod), amount=Decimal(str(amount.value())))
             for method_combo, amount in self.payment_rows
