@@ -6,34 +6,40 @@
 
 ## Table of Contents
 
-1. [What Is KaratPOS?](#1-what-is-karatpos)
-2. [Before You Begin](#2-before-you-begin)
-3. [Installing KaratPOS](#3-installing-karatpos)
-4. [Logging In For the First Time](#4-logging-in-for-the-first-time)
-5. [Understanding the Screen Layout](#5-understanding-the-screen-layout)
-   - [5a. Changing Your Password](#5a-changing-your-password)
-6. [The One Idea You Must Understand: Live Gold Pricing](#6-the-one-idea-you-must-understand-live-gold-pricing)
-7. [Your Daily Opening Routine](#7-your-daily-opening-routine)
-8. [Walkthrough: Making Your First Sale](#8-walkthrough-making-your-first-sale)
-9. [Screen-by-Screen Reference](#9-screen-by-screen-reference)
-   - [9.1 Dashboard](#91-dashboard)
-   - [9.2 Gold Rates](#92-gold-rates)
-   - [9.3 Inventory](#93-inventory)
-   - [9.4 Point of Sale](#94-point-of-sale)
-   - [9.5 Customers](#95-customers)
-   - [9.6 Suppliers & Purchases](#96-suppliers--purchases)
-   - [9.7 Transaction History](#97-transaction-history)
-   - [9.8 Returns & Exchanges](#98-returns--exchanges)
-   - [9.9 Repairs](#99-repairs)
-   - [9.10 Advance Orders](#910-advance-orders)
-   - [9.11 Stock Take](#911-stock-take)
-   - [9.12 Reports & Analytics](#912-reports--analytics)
-   - [9.13 Audit Log](#913-audit-log)
-   - [9.14 Settings](#914-settings)
-10. [Understanding Status Labels](#10-understanding-status-labels)
-11. [Who Can Do What (Roles)](#11-who-can-do-what-roles)
-12. [Common Questions & Troubleshooting](#12-common-questions--troubleshooting)
-13. [Keeping Your Data Safe](#13-keeping-your-data-safe)
+<ol>
+<li><a href="#1-what-is-karatpos">What Is KaratPOS?</a></li>
+<li><a href="#2-before-you-begin">Before You Begin</a></li>
+<li><a href="#3-installing-karatpos">Installing KaratPOS</a></li>
+<li><a href="#4-logging-in-for-the-first-time">Logging In For the First Time</a></li>
+<li><a href="#5-understanding-the-screen-layout">Understanding the Screen Layout</a>
+  <ol type="a"><li><a href="#5a-changing-your-password">Changing Your Password</a></li></ol>
+</li>
+<li><a href="#6-the-one-idea-you-must-understand-live-gold-pricing">The One Idea You Must Understand: Live Gold Pricing</a></li>
+<li><a href="#7-your-daily-opening-routine">Your Daily Opening Routine</a></li>
+<li><a href="#8-walkthrough-making-your-first-sale">Walkthrough: Making Your First Sale</a></li>
+<li><a href="#9-screen-by-screen-reference">Screen-by-Screen Reference</a>
+  <ol>
+    <li><a href="#91-dashboard">Dashboard</a></li>
+    <li><a href="#92-gold-rates">Gold Rates</a></li>
+    <li><a href="#93-inventory">Inventory</a></li>
+    <li><a href="#94-point-of-sale">Point of Sale</a></li>
+    <li><a href="#95-customers">Customers</a></li>
+    <li><a href="#96-suppliers--purchases">Suppliers &amp; Purchases</a></li>
+    <li><a href="#97-transaction-history">Transaction History</a></li>
+    <li><a href="#98-returns--exchanges">Returns &amp; Exchanges</a></li>
+    <li><a href="#99-repairs">Repairs</a></li>
+    <li><a href="#910-advance-orders">Advance Orders</a></li>
+    <li><a href="#911-stock-take">Stock Take</a></li>
+    <li><a href="#912-reports--analytics">Reports &amp; Analytics</a></li>
+    <li><a href="#913-audit-log">Audit Log</a></li>
+    <li><a href="#914-settings">Settings</a></li>
+  </ol>
+</li>
+<li><a href="#10-understanding-status-labels">Understanding Status Labels</a></li>
+<li><a href="#11-who-can-do-what-roles">Who Can Do What (Roles)</a></li>
+<li><a href="#12-common-questions--troubleshooting">Common Questions &amp; Troubleshooting</a></li>
+<li><a href="#13-keeping-your-data-safe">Keeping Your Data Safe</a></li>
+</ol>
 
 ---
 
