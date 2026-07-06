@@ -60,3 +60,23 @@ class SettingsScreen(QWidget):
         form.addRow(save_button)
 
         return box
+
+    def _build_sales_rules_box(self) -> QWidget:
+        box = QGroupBox("Sales Rules")
+        form = QFormLayout(box)
+
+        self.tax_percent_input = QLineEdit()
+        self.discount_threshold_input = QLineEdit()
+        self.old_gold_margin_input = QLineEdit()
+        self.block_sale_checkbox = QCheckBox("Block sales until today's gold rate is entered for all purities")
+
+        form.addRow("Tax (%):", self.tax_percent_input)
+        form.addRow("Discount approval threshold (%):", self.discount_threshold_input)
+        form.addRow("Old gold buy-back margin (%):", self.old_gold_margin_input)
+        form.addRow(self.block_sale_checkbox)
+
+        save_button = QPushButton("Save Sales Rules")
+        save_button.clicked.connect(self._handle_save_sales_rules)
+        form.addRow(save_button)
+
+        return box
