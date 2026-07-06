@@ -5,10 +5,12 @@ update immediately, per the project brief.
 """
 from __future__ import annotations
 
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from app.services.category_service import get_low_stock_categories
-from app.services.dashboard_service import get_today_stats
+from app.services.dashboard_service import get_dashboard_chart_data, get_today_stats
 
 
 class DashboardScreen(QWidget):
@@ -37,6 +39,18 @@ class DashboardScreen(QWidget):
         self.low_stock_label.setStyleSheet("color: #b8860b; font-weight: bold; padding-top: 8px;")
         self.low_stock_label.setWordWrap(True)
         layout.addWidget(self.low_stock_label)
+
+        charts_row = QHBoxLayout()
+        self.sales_figure = Figure(figsize=(4, 3))
+        self.sales_canvas = FigureCanvas(self.sales_figure)
+        self.payment_figure = Figure(figsize=(4, 3))
+        self.payment_canvas = FigureCanvas(self.payment_figure)
+        self.category_figure = Figure(figsize=(4, 3))
+        self.category_canvas = FigureCanvas(self.category_figure)
+        charts_row.addWidget(self.sales_canvas)
+        charts_row.addWidget(self.payment_canvas)
+        charts_row.addWidget(self.category_canvas)
+        layout.addLayout(charts_row, stretch=1)
 
         layout.addStretch()
 
@@ -79,3 +93,42 @@ class DashboardScreen(QWidget):
             self.low_stock_label.setText("⚠ Low stock: " + ", ".join(parts))
         else:
             self.low_stock_label.setText("")
+
+        self._refresh_charts()
+
+    def _refresh_charts(self) -> None:
+        chart_data = get_dashboard_chart_data(days=7)
+
+        self.sales_figure.clear()
+        ax1 = self.sales_figure.add_subplot(111)
+        days = [d.strftime("%d %b") for d, _ in chart_data.daily_totals]
+        totals = [float(v) for _, v in chart_data.daily_totals]
+        ax1.bar(days, totals, color="#1976d2")
+        ax1.set_title("Last 7 Days Sales")
+        ax1.tick_params(axis="x", rotation=45, labelsize=7)
+        self.sales_figure.tight_layout()
+        self.sales_canvas.draw()
+
+        self.payment_figure.clear()
+        ax2 = self.payment_figure.add_subplot(111)
+        if chart_data.payment_breakdown:
+            labels = list(chart_data.payment_breakdown.keys())
+            values = [float(v) for v in chart_data.payment_breakdown.values()]
+            ax2.pie(values, labels=labels, autopct="%1.0f%%", textprops={"fontsize": 7})
+        else:
+            ax2.text(0.5, 0.5, "No sales yet", ha="center", va="center")
+        ax2.set_title("Payment Methods (7 days)")
+        self.payment_figure.tight_layout()
+        self.payment_canvas.draw()
+
+        self.category_figure.clear()
+        ax3 = self.category_figure.add_subplot(111)
+        if chart_data.top_categories:
+            names = [name for name, _ in chart_data.top_categories]
+            counts = [count for _, count in chart_data.top_categories]
+            ax3.barh(names, counts, color="#2e7d32")
+        else:
+            ax3.text(0.5, 0.5, "No sales yet", ha="center", va="center")
+        ax3.set_title("Top 5 Categories (7 days)")
+        self.category_figure.tight_layout()
+        self.category_canvas.draw()
