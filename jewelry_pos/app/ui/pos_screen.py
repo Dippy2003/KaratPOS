@@ -27,7 +27,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.database.models import Item, ItemStatus, PaymentMethod
+from app.database.models import Item, ItemStatus, PaymentMethod, UserRole
+from app.services.auth_service import authenticate
 from app.services.cart import Cart, CartLine
 from app.services.customer_service import find_by_phone
 from app.services.gold_rate_service import get_latest_rate, has_todays_rate_for_all_purities
