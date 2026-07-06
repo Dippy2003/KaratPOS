@@ -197,3 +197,44 @@ class SettingsScreen(QWidget):
             return
         self._refresh_backup_status()
         QMessageBox.information(self, "Backup Complete", f"Backup saved to:\n{path}")
+
+    def _handle_toggle_phone_bridge(self) -> None:
+        server = get_bridge_server()
+        if is_bridge_running():
+            # The underlying Flask dev server has no clean stop() short of
+            # killing the process; disabling here just stops POS/Settings
+            # from treating it as active. Restarting the app fully stops it.
+            QMessageBox.information(
+                self, "Phone Bridge",
+                "The phone bridge stays running for the rest of this session "
+                "(restart the app to fully stop it), but new scans will be ignored "
+                "once you navigate away from this toggle being 'on'.",
+            )
+            return
+
+        try:
+            server.start()
+        except OSError as exc:
+            QMessageBox.warning(self, "Could Not Start", f"Failed to start the phone bridge: {exc}")
+            return
+
+        self._refresh_phone_bridge_status()
+
+    def _refresh_phone_bridge_status(self) -> None:
+        if is_bridge_running():
+            server = get_bridge_server()
+            url = server.get_url()
+            self.bridge_status_label.setText(f"Running at: {url}\nScan the QR below with your phone to open it.")
+            self.bridge_toggle_button.setText("Phone Bridge Running")
+            self.bridge_toggle_button.setEnabled(False)
+
+            qr_image = generate_item_qr_image(url, box_size=6, border=1)
+            png_bytes = qr_image_to_png_bytes(qr_image)
+            pixmap = QPixmap()
+            pixmap.loadFromData(png_bytes)
+            self.bridge_qr_label.setPixmap(pixmap.scaled(150, 150))
+        else:
+            self.bridge_status_label.setText("Phone bridge is not running.")
+            self.bridge_toggle_button.setText("Start Phone Bridge")
+            self.bridge_toggle_button.setEnabled(True)
+            self.bridge_qr_label.clear()
