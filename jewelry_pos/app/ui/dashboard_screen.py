@@ -5,10 +5,12 @@ update immediately, per the project brief.
 """
 from __future__ import annotations
 
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from app.services.category_service import get_low_stock_categories
-from app.services.dashboard_service import get_today_stats
+from app.services.dashboard_service import get_dashboard_chart_data, get_today_stats
 
 
 class DashboardScreen(QWidget):
