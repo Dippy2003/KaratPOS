@@ -326,6 +326,14 @@ class POSScreen(QWidget):
             QMessageBox.warning(self, "Empty Cart", "Add at least one item before completing the sale.")
             return
 
+        if get_bool_setting("block_sale_without_todays_rate") and not has_todays_rate_for_all_purities():
+            QMessageBox.warning(
+                self, "Rate Not Entered Today",
+                "Sales are blocked until today's gold rate has been entered for all purities "
+                "(see Settings). Ask an admin to enter today's rate in the Gold Rates screen.",
+            )
+            return
+
         discount = Decimal(str(self.discount_input.value()))
         tax_percent = Decimal(str(self.tax_input.value()))
         payments = [
