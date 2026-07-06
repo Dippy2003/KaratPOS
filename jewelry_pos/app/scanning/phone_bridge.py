@@ -1,0 +1,60 @@
+"""
+LAN-only phone camera scanning bridge. Runs a small Flask server that
+serves one mobile page (html5-qrcode) which opens the phone's camera;
+on scan, the phone POSTs the decoded item_code back here, which is
+pushed into a thread-safe queue for the POS screen to drain via a Qt
+timer. No internet access is used or required -- this only works on
+the shop's local Wi-Fi/LAN.
+"""
+from __future__ import annotations
+
+import queue
+import socket
+import threading
+
+from flask import Flask, jsonify, render_template_string, request
+
+_scanned_code_queue: "queue.Queue[str]" = queue.Queue()
+
+_MOBILE_PAGE_HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>KaratPOS Scanner</title>
+    <!-- html5-qrcode is loaded from /static/html5-qrcode.min.js, bundled
+         locally (see app/scanning/static/) so the phone does not need
+         internet access -- only LAN connectivity to this desktop PC. -->
+    <script src="/static/html5-qrcode.min.js"></script>
+</head>
+<body style="font-family: sans-serif; text-align: center; padding: 12px;">
+    <h2>KaratPOS Item Scanner</h2>
+    <div id="reader" style="width: 100%; max-width: 400px; margin: 0 auto;"></div>
+    <p id="status">Point the camera at an item's QR tag.</p>
+    <script>
+        function onScanSuccess(decodedText) {
+            document.getElementById("status").innerText = "Scanned: " + decodedText;
+            fetch("/scan", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({code: decodedText}),
+            });
+        }
+        const scanner = new Html5Qrcode("reader");
+        scanner.start({facingMode: "environment"}, {fps: 10, qrbox: 250}, onScanSuccess);
+    </script>
+</body>
+</html>
+"""
+
+
+def get_lan_ip() -> str:
+    """Best-effort LAN IP for staff to reach this server from their phone."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        return s.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
+    finally:
+        s.close()
