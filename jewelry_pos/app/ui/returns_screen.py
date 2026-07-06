@@ -28,15 +28,17 @@ from PySide6.QtWidgets import (
 )
 
 from app.database.models import PaymentMethod
+from app.services.exchange_state import set_pending_exchange_credit
 from app.services.returns_service import ReturnError, process_return
 from app.services.transaction_service import get_invoice_detail, search_invoices
 from app.utils.qt_helpers import combo_enum_data
 
 
 class ReturnsScreen(QWidget):
-    def __init__(self, current_user_id: int, parent: QWidget | None = None) -> None:
+    def __init__(self, current_user_id: int, on_start_exchange=None, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.current_user_id = current_user_id
+        self.on_start_exchange = on_start_exchange
         self.current_invoice_detail = None
         self._build_ui()
 
