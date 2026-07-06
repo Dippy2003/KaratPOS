@@ -80,3 +80,33 @@ class SettingsScreen(QWidget):
         form.addRow(save_button)
 
         return box
+
+    def _build_printer_box(self) -> QWidget:
+        box = QGroupBox("Thermal Printer (optional, 80mm ESC/POS)")
+        form = QFormLayout(box)
+
+        self.thermal_enabled_checkbox = QCheckBox("Enable thermal receipt printing")
+        self.thermal_port_input = QLineEdit()
+        self.thermal_port_input.setPlaceholderText("VENDOR_ID:PRODUCT_ID e.g. 04b8:0202")
+
+        form.addRow(self.thermal_enabled_checkbox)
+        form.addRow("Printer port:", self.thermal_port_input)
+
+        save_button = QPushButton("Save Printer Settings")
+        save_button.clicked.connect(self._handle_save_printer_settings)
+        form.addRow(save_button)
+
+        return box
+
+    def _build_backup_box(self) -> QWidget:
+        box = QGroupBox("Backups")
+        layout = QVBoxLayout(box)
+
+        self.backup_status_label = QLabel("")
+        layout.addWidget(self.backup_status_label)
+
+        backup_now_button = QPushButton("Backup Now")
+        backup_now_button.clicked.connect(self._handle_backup_now)
+        layout.addWidget(backup_now_button)
+
+        return box
