@@ -153,6 +153,7 @@ class SettingsScreen(QWidget):
         self.thermal_enabled_checkbox.setChecked(get_bool_setting("thermal_printer_enabled"))
         self.thermal_port_input.setText(get_setting("thermal_printer_port"))
 
+        self._refresh_phone_bridge_status()
         self._refresh_backup_status()
 
     def _refresh_backup_status(self) -> None:
