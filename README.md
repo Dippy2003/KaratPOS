@@ -14,7 +14,7 @@ A complete, installable, offline-first desktop ERP & Point-of-Sale system built 
 [![Flask](https://img.shields.io/badge/Flask-Phone_Bridge-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![License](https://img.shields.io/badge/License-Academic_Project-lightgrey?style=for-the-badge)]()
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)]()
-[![Status](https://img.shields.io/badge/Status-In_Development-yellow?style=for-the-badge)]()
+[![Status](https://img.shields.io/badge/Status-All_10_Phases_Complete-brightgreen?style=for-the-badge)]()
 
 </div>
 
@@ -28,6 +28,7 @@ A complete, installable, offline-first desktop ERP & Point-of-Sale system built 
 - [Features](#features)
 - [Project Structure](#project-structure)
 - [Database Schema](#database-schema)
+- [Entity-Relationship Diagram](#entity-relationship-diagram)
 - [Roles & Permissions](#roles--permissions)
 - [Getting Started](#getting-started)
 - [Default Login Credentials](#default-login-credentials)
@@ -188,6 +189,90 @@ KaratPOS/
 
 ---
 
+## Entity-Relationship Diagram
+
+```mermaid
+erDiagram
+    USERS ||--o{ GOLD_RATES : enters
+    USERS ||--o{ INVOICES : cashiers
+    USERS ||--o{ AUDIT_LOGS : performs
+
+    CATEGORIES ||--o{ ITEMS : contains
+    SUPPLIERS ||--o{ ITEMS : supplies
+    SUPPLIERS ||--o{ PURCHASES : fulfills
+
+    ITEMS ||--o{ INVOICE_ITEMS : "sold as"
+    ITEMS ||--o{ PURCHASE_ITEMS : "received as"
+
+    CUSTOMERS ||--o{ INVOICES : places
+    CUSTOMERS ||--o{ REPAIRS : requests
+    CUSTOMERS ||--o{ ADVANCE_ORDERS : orders
+    CUSTOMERS ||--o{ OLD_GOLD_RECEIPTS : sells
+
+    INVOICES ||--o{ INVOICE_ITEMS : contains
+    INVOICES ||--o{ PAYMENTS : "paid via"
+    INVOICES ||--o{ RETURNS : "returned via"
+    INVOICES ||--o| OLD_GOLD_RECEIPTS : "exchange on"
+
+    INVOICE_ITEMS ||--o{ RETURNS : "returned as"
+
+    PURCHASES ||--o{ PURCHASE_ITEMS : contains
+
+    ADVANCE_ORDERS ||--o{ ADVANCE_PAYMENTS : installments
+
+    USERS {
+        int id PK
+        string username
+        string password_hash
+        enum role
+    }
+    GOLD_RATES {
+        int id PK
+        date rate_date
+        enum purity
+        decimal rate_per_gram
+        int entered_by_id FK
+    }
+    ITEMS {
+        int id PK
+        string item_code
+        int category_id FK
+        int supplier_id FK
+        enum purity
+        decimal net_weight_g
+        enum status
+    }
+    CUSTOMERS {
+        int id PK
+        string name
+        string phone
+        decimal total_spent
+    }
+    INVOICES {
+        int id PK
+        string invoice_no
+        int customer_id FK
+        int user_id FK
+        decimal grand_total
+        enum status
+    }
+    INVOICE_ITEMS {
+        int id PK
+        int invoice_id FK
+        int item_id FK
+        decimal gold_rate_used
+        decimal line_total
+    }
+    PAYMENTS {
+        int id PK
+        int invoice_id FK
+        enum method
+        decimal amount
+    }
+```
+
+---
+
 ## Roles & Permissions
 
 | Role | Can Access |
@@ -266,26 +351,46 @@ The system is built in demoable phases. ✅ = must run and be testable before mo
 | Phase | Scope | Status |
 |---|---|---|
 | **1** | Foundation — schema, DB init/seed, login, role-based nav shell | ✅ Complete |
-| **2** | Gold rate management, inventory CRUD, QR tag printing | 🔄 In Progress |
-| **3** | POS core — cart, pricing, mixed payments, atomic sale, receipts *(MVP)* | ⏳ Planned |
-| **4** | Webcam QR scanning in POS | ⏳ Planned |
-| **5** | Customers, old gold exchange, transaction history, cancellations | ⏳ Planned |
-| **6** | Returns & exchanges | ⏳ Planned |
-| **7** | Suppliers, purchases, repairs, advance orders/installments | ⏳ Planned |
-| **8** | Reports & analytics, audit log viewer, stock take, low-stock alerts | ⏳ Planned |
-| **9** | Settings, backups, thermal printing | ⏳ Planned |
-| **10** | Phone scanning bridge, PyInstaller + Inno Setup packaging, polish | ⏳ Planned |
+| **2** | Gold rate management, inventory CRUD, QR tag printing | ✅ Complete |
+| **3** | POS core — cart, pricing, mixed payments, atomic sale, receipts *(MVP)* | ✅ Complete |
+| **4** | Webcam QR scanning in POS | ✅ Complete |
+| **5** | Customers, old gold exchange, transaction history, cancellations | ✅ Complete |
+| **6** | Returns & exchanges | ✅ Complete |
+| **7** | Suppliers, purchases, repairs, advance orders/installments | ✅ Complete |
+| **8** | Reports & analytics, audit log viewer, stock take, low-stock alerts | ✅ Complete |
+| **9** | Settings, backups, thermal printing | ✅ Complete |
+| **10** | Phone scanning bridge, PyInstaller + Inno Setup packaging, polish | ✅ Complete |
 
 ---
 
 ## Packaging as a Windows Installer
 
-*(Final phase — not yet implemented)*
+### 1. Build the one-folder executable with PyInstaller
 
-1. **PyInstaller** bundles the app into `dist/JewelryPOS/` (one-folder mode), including OpenCV/pyzbar DLLs.
-2. **Inno Setup** (`build/installer.iss`) produces `JewelryPOS_Setup.exe` with Start Menu + desktop shortcuts.
-3. Database and backups are written to a **writable app-data folder** — never inside `Program Files`.
-4. First run on a fresh install auto-creates the DB and seeds it, then shows the login screen.
+```powershell
+cd jewelry_pos
+venv\Scripts\activate
+pyinstaller build\jewelry_pos.spec --distpath dist --workpath build\work --noconfirm
+```
+
+This produces `jewelry_pos\dist\KaratPOS\KaratPOS.exe` plus all its dependencies in the same folder (OpenCV, pyzbar, and their native DLLs are collected explicitly in the spec file). Run `dist\KaratPOS\KaratPOS.exe` directly to verify the standalone build before packaging it further — no Python installation is required to run it.
+
+### 2. Build the installer with Inno Setup
+
+Install [Inno Setup](https://jrsoftware.org/isinfo.php), then either open `jewelry_pos\build\installer.iss` in the Inno Setup Compiler GUI and click Compile, or run from the command line:
+
+```powershell
+cd jewelry_pos\build
+ISCC.exe installer.iss
+```
+
+This produces `jewelry_pos\build\output\JewelryPOS_Setup.exe` — a single-file installer with Start Menu and optional desktop shortcuts.
+
+### Notes
+
+- The database and backups are **never** bundled into the installer — `app/utils/config.py` resolves all data paths relative to the running executable (`sys.executable` when frozen), so `KaratPOS.exe` creates and seeds `data/jewelry_pos.db` next to itself on first run, exactly like running from source.
+- Data is preserved across upgrades: reinstalling over an existing install does not touch the `data/` folder.
+- The phone-scanning bridge's `html5-qrcode.min.js` is bundled locally (not loaded from a CDN), so that bonus feature also works without internet access on the phone — only LAN connectivity to the desktop PC is required.
 
 ---
 
