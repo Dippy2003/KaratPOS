@@ -161,6 +161,30 @@ class POSScreen(QWidget):
         self._refresh_cart_table()
         self.code_input.setFocus()
 
+    def _apply_pending_exchange_credit(self) -> None:
+        """
+        If the Returns screen just processed a return and the user chose
+        to start an exchange, pre-fill the first payment row with a
+        STORE_CREDIT payment for the refund amount. The cashier can then
+        add more items/payments to cover any price difference either way.
+        """
+        pending = take_pending_exchange_credit()
+        if pending is None:
+            return
+
+        method_combo, amount_input = self.payment_rows[0]
+        index = method_combo.findData(PaymentMethod.STORE_CREDIT)
+        if index >= 0:
+            method_combo.setCurrentIndex(index)
+        amount_input.setValue(float(pending.amount))
+        self._update_totals()
+
+        QMessageBox.information(
+            self, "Exchange Credit Applied",
+            f"Rs. {pending.amount:,.2f} store credit from return #{pending.source_return_id} "
+            "has been applied as a payment. Add items to the cart, then complete the sale.",
+        )
+
     def _handle_open_webcam_scan(self) -> None:
         dialog = WebcamScanDialog(self)
         dialog.code_scanned.connect(self._handle_add_by_code)
