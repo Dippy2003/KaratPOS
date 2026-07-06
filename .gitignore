@@ -8,8 +8,8 @@ __pycache__/
 *.db-journal
 jewelry_pos/data/*.db
 jewelry_pos/data/backups/*.db
-build/
-dist/
+jewelry_pos/build/work/
+jewelry_pos/dist/
 *.spec.bak
 .vscode/
 *.egg-info/

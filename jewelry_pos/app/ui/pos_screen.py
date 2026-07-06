@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
@@ -35,6 +35,7 @@ from app.services.customer_service import find_by_phone
 from app.services.gold_rate_service import get_latest_rate, has_todays_rate_for_all_purities
 from app.services.item_service import get_item_by_code
 from app.services.pricing_service import calculate_item_price
+from app.scanning.bridge_singleton import get_bridge_server, is_bridge_running
 from app.services.reservation_service import ReservationError, release_item, reserve_item
 from app.services.sales_service import OldGoldExchangeInput, PaymentInput, SaleError, complete_sale
 from app.services.settings_service import get_bool_setting, get_setting
@@ -54,6 +55,23 @@ class POSScreen(QWidget):
         self.selected_customer = None  # CustomerRow | None
         self.old_gold_input: OldGoldExchangeInput | None = None
         self._build_ui()
+        self._start_phone_bridge_polling()
+
+    def _start_phone_bridge_polling(self) -> None:
+        """
+        If the phone scanning bridge is running (started from Settings),
+        poll its queue every 500ms and feed any newly scanned codes
+        through the same add-by-code path as USB/manual/webcam entry.
+        """
+        self._bridge_poll_timer = QTimer(self)
+        self._bridge_poll_timer.timeout.connect(self._poll_phone_bridge)
+        self._bridge_poll_timer.start(500)
+
+    def _poll_phone_bridge(self) -> None:
+        if not is_bridge_running():
+            return
+        for code in get_bridge_server().drain_scanned_codes():
+            self._handle_add_by_code(code)
 
     def _build_ui(self) -> None:
         layout = QVBoxLayout(self)
